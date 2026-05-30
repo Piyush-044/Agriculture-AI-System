@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | AgriClimate AI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+    <div class="background-animation"></div>
+
+    <header class="glass-header">
+        <div class="logo">
+            <span class="icon">🌱</span>
+            <h1>AgriClimate AI</h1>
+        </div>
+        <nav>
+            <a href="/">Login</a>
+            <a href="/app">Dashboard</a>
+        </nav>
+    </header>
+
+    <main class="auth-page">
+        <div class="auth-card glass-card">
+            <h2>Sign in to AgriClimate AI</h2>
+            <p>Use any email and password for demo access, then continue to the crop prediction dashboard.</p>
+
+            <form id="auth-form" class="auth-form">
+                <div class="form-group">
+                    <label for="auth-email">Email address</label>
+                    <input type="email" id="auth-email" placeholder="you@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="auth-password">Password</label>
+                    <input type="password" id="auth-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="primary-btn">Log in</button>
+                <p class="auth-meta">Your login is stored locally in this browser for the demo experience.</p>
+                <div class="auth-error hidden" id="auth-error">Please fill in both email and password.</div>
+            </form>
+        </div>
+    </main>
+
+    <script src="/assets/login.js"></script>
+</body>
+</html>

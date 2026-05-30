@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriClimate AI | Intelligent Crop Recommendation</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet CSS for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    
+    <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+    <div class="background-animation"></div>
+    
+    <header class="glass-header">
+        <div class="logo">
+            <span class="icon">🌱</span>
+            <h1>AgriClimate AI</h1>
+        </div>
+        <nav>
+            <a href="/app">Dashboard</a>
+            <a href="#map-view">Satellite Map</a>
+            <a href="#" id="auth-action">Logout</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="dashboard" class="hero-section">
+            <div class="hero-content">
+                <h2>Predict the <span class="highlight">Best Crop</span> for your Land</h2>
+                <p>Leverage cutting-edge Machine Learning and real-time climatic intelligence to optimize your agricultural yield. Enter your soil and weather parameters below to get instant AI-driven recommendations.</p>
+            </div>
+
+            <div class="prediction-container glass-card">
+                <h3>Soil & Climate Parameters</h3>
+                <form id="prediction-form">
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label for="N">Nitrogen (N)</label>
+                            <input type="number" id="N" required placeholder="e.g. 90" min="0" max="140">
+                        </div>
+                        <div class="input-group">
+                            <label for="P">Phosphorus (P)</label>
+                            <input type="number" id="P" required placeholder="e.g. 42" min="5" max="145">
+                        </div>
+                        <div class="input-group">
+                            <label for="K">Potassium (K)</label>
+                            <input type="number" id="K" required placeholder="e.g. 43" min="5" max="205">
+                        </div>
+                        <div class="input-group">
+                            <label for="temperature">Temperature (°C)</label>
+                            <input type="number" step="0.1" id="temperature" required placeholder="e.g. 25.5">
+                        </div>
+                        <div class="input-group">
+                            <label for="humidity">Humidity (%)</label>
+                            <input type="number" step="0.1" id="humidity" required placeholder="e.g. 80.0">
+                        </div>
+                        <div class="input-group">
+                            <label for="ph">pH Level</label>
+                            <input type="number" step="0.1" id="ph" required placeholder="e.g. 6.5" min="0" max="14">
+                        </div>
+                        <div class="input-group full-width">
+                            <label for="rainfall">Rainfall (mm)</label>
+                            <input type="number" step="0.1" id="rainfall" required placeholder="e.g. 200.0">
+                        </div>
+                    </div>
+                    <button type="submit" class="primary-btn" id="predict-btn">
+                        <span>Analyze & Predict</span>
+                        <div class="spinner hidden" id="loading-spinner"></div>
+                    </button>
+                </form>
+
+                <div id="result-box" class="result-box hidden">
+                    <h4>Recommended Crop:</h4>
+                    <h2 id="predicted-crop">Rice</h2>
+                    <p class="confidence" id="confidence-level">Confidence: High</p>
+                    <p class="state-analysis-desc" id="state-analysis-text"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- New State Explorer Section -->
+        <section id="explore-data" class="explore-section">
+            <div class="section-header">
+                <h2>Explore Data</h2>
+                <p>Click on an Indian state to instantly analyze its historical weather, verify soil dynamics, and predict the best optimal crop.</p>
+            </div>
+            
+            <div class="state-grid" id="state-grid">
+                <!-- Javascript will inject state cards here -->
+            </div>
+        </section>
+
+        <section id="map-view" class="map-section">
+            <div class="section-header">
+                <h2>Regional <span class="highlight">Satellite Intelligence</span></h2>
+                <p>Click anywhere on the map to analyze regional agricultural topography via Open-Source Satellite Tiles.</p>
+            </div>
+            <div class="map-container glass-card">
+                <div id="map"></div>
+                <div class="map-overlay" id="location-info">
+                    <h3 id="overlay-state-name" class="highlight-green">Select a Region</h3>
+                    <div id="weather-details" class="weather-details hidden">
+                        <div class="weather-grid">
+                            <div class="w-item"><span>🌡️ Temp:</span> <strong id="overlay-temp">-</strong>°C</div>
+                            <div class="w-item"><span>💧 Humidity:</span> <strong id="overlay-humidity">-</strong>%</div>
+                            <div class="w-item"><span>🌧️ Rainfall:</span> <strong id="overlay-rain">-</strong>mm</div>
+                            <div class="w-item"><span>🌱 Soil:</span> <strong id="overlay-soil">-</strong></div>
+                            <div class="w-item full-width"><span>☁️ Condition:</span> <strong id="overlay-condition">-</strong></div>
+                        </div>
+                        <div id="risk-alert-box" class="risk-alert hidden">
+                            <span class="alert-icon">⚠️</span>
+                            <div>
+                                <span class="alert-title">EARLY WARNING</span>
+                                <strong id="overlay-risk">None</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <p id="overlay-default-text" style="color:var(--text-muted); font-size:0.9rem; margin-top:10px;">Select a state card from above to analyze weather.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- New Contact Section -->
+        <section id="contact" class="contact-section">
+            <div class="contact-container">
+                <div class="contact-info">
+                    <h2>Let's Cultivate Resilience</h2>
+                    <p>Join us in transforming agriculture for the climate-uncertain future. Whether you're a partner, researcher, or curious mind—we'd love to hear from you.</p>
+                    
+                    <div class="contact-item">
+                        <div class="icon-box">✉️</div>
+                        <div>
+                            <span class="muted-label">EMAIL US</span>
+                            <strong>piyushtanya2006@gmail.com</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="contact-item">
+                        <div class="icon-box">💻</div>
+                        <div>
+                            <span class="muted-label">OPEN SOURCE</span>
+                            <strong>github.com/agriclimate-ai</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="contact-form-card glass-card">
+                    <form id="contact-form">
+                        <div class="form-row">
+                            <input type="text" placeholder="First Name" required>
+                            <input type="text" placeholder="Last Name" required>
+                        </div>
+                        <input type="email" placeholder="Email Address" value="piyushtanya2006@gmail.com" required class="full-width-input">
+                        <textarea placeholder="Tell us about your project or interest..." rows="4" required class="full-width-input"></textarea>
+                        <button type="submit" class="contact-btn">Send Message</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <h3 class="highlight-green">AgriClimate AI</h3>
+                <p>© 2024 AI-Driven Climate Intelligence. Resilient Agriculture for a Living Planet.</p>
+            </div>
+            <div class="footer-links">
+                <h4 class="highlight-green">Product</h4>
+                <a href="#">Solutions</a>
+                <a href="#">Climate Data</a>
+                <a href="#">Hackathon 2024</a>
+            </div>
+            <div class="footer-links">
+                <h4 class="highlight-green">Legal</h4>
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+            </div>
+            <div class="footer-links">
+                <h4 class="highlight-green">Connect</h4>
+                <a href="mailto:piyushtanya2006@gmail.com">piyushtanya2006@gmail.com</a>
+                <a href="#">GitHub</a>
+                <a href="#">Twitter</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Leaflet JS -->
+    <script>
+        if (!localStorage.getItem("agriclimate_user")) {
+            window.location.href = "/";
+        }
+    </script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="/assets/script.js"></script>
+</body>
+</html>
