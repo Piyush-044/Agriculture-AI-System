@@ -1342,13 +1342,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- Open/Close ---
     if (advisorBubble && advisorPanel) {
-        advisorBubble.addEventListener('click', () => {
+        advisorBubble.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             advisorPanel.classList.toggle('hidden');
             const badge = advisorBubble.querySelector('.bubble-badge');
             if (badge) badge.classList.add('hidden');
             if (!advisorPanel.classList.contains('hidden')) {
                 advisorMessages.scrollTop = advisorMessages.scrollHeight;
-                advisorInput.focus();
+                advisorInput.focus({ preventScroll: true });
             }
         });
     }
@@ -1649,7 +1651,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 addChatMessage('Network error! Internet connection check karo aur dobara try karo. 📡', 'bot-message');
             } finally {
                 sendBtn.disabled = false;
-                advisorInput.focus();
+                advisorInput.focus({ preventScroll: true });
             }
         });
     }
