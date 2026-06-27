@@ -47,9 +47,44 @@
 
     <main>
         <section id="dashboard" class="hero-section">
-            <div class="hero-content">
-                <h2>Predict the <span class="highlight" data-text="Best Crop">Best Crop</span> for your Land</h2>
-                <p>Leverage cutting-edge Machine Learning and real-time climatic intelligence to optimize your agricultural yield. Enter your soil and weather parameters below to get instant AI-driven recommendations.</p>
+            <div class="hero-grid">
+                <div class="hero-content">
+                    <h2>Predict the <span class="highlight" data-text="Best Crop">Best Crop</span> for your Land</h2>
+                    <p>Leverage cutting-edge Machine Learning and real-time climatic intelligence to optimize your agricultural yield. Enter your soil and weather parameters below to get instant AI-driven recommendations.</p>
+                    <div class="hero-cta">
+                        <a href="#prediction-container" class="primary-btn pulse-glow">Get Started</a>
+                        <a href="#map-view" class="secondary-btn">Explore Live Map</a>
+                    </div>
+                </div>
+                
+                <!-- 3D Hologram Card -->
+                <div class="hero-3d-container">
+                    <div class="hologram-card" id="hologram-card">
+                        <div class="hologram-grid"></div>
+                        <div class="hologram-glow"></div>
+                        
+                        <!-- Rotating Tech Rings -->
+                        <div class="hologram-ring ring-outer"></div>
+                        <div class="hologram-ring ring-middle"></div>
+                        <div class="hologram-ring ring-inner"></div>
+                        
+                        <!-- Floating Hologram Visual -->
+                        <div class="hologram-plant">
+                            <div class="plant-leaf leaf-left"></div>
+                            <div class="plant-leaf leaf-right"></div>
+                            <div class="plant-stem"></div>
+                            <div class="plant-glow-core"></div>
+                        </div>
+                        
+                        <!-- Scanner Laser line -->
+                        <div class="hologram-scanner"></div>
+                        
+                        <!-- Overlay Tech Data Labels -->
+                        <div class="hologram-label label-tr">SYS_READY</div>
+                        <div class="hologram-label label-bl">ACCURACY_97.8%</div>
+                        <div class="hologram-label label-br">AI_SCAN_ACTIVE</div>
+                    </div>
+                </div>
             </div>
 
             <!-- Animated Hero Stats -->
@@ -72,7 +107,7 @@
                 </div>
             </div>
 
-            <div class="prediction-container glass-card">
+            <div id="prediction-container" class="prediction-container glass-card">
                 <h3>Soil & Climate Parameters</h3>
                 <form id="prediction-form">
                     <div class="form-grid">

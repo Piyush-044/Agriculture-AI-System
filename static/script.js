@@ -26,6 +26,28 @@ document.addEventListener("DOMContentLoaded", () => {
         }, { passive: true });
     }
 
+    // ---- 3D Parallax Tilt Effect for Hologram Card ----
+    const hologramCard = document.getElementById('hologram-card');
+    if (hologramCard) {
+        hologramCard.addEventListener('mousemove', (e) => {
+            const rect = hologramCard.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            const rotateX = ((y - centerY) / centerY) * -15; // Max 15 degrees tilt
+            const rotateY = ((x - centerX) / centerX) * 15;
+            
+            hologramCard.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+        });
+        
+        hologramCard.addEventListener('mouseleave', () => {
+            hologramCard.style.transform = 'rotateX(0deg) rotateY(0deg)';
+        });
+    }
+
     // ---- Particle Canvas System ----
     const canvas = document.getElementById('particle-canvas');
     if (canvas) {
