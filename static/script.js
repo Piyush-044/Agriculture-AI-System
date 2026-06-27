@@ -48,6 +48,181 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // ---- 3D Canvas Background Animation for Hero Banner ----
+    const heroCanvas = document.getElementById('hero-3d-canvas');
+    if (heroCanvas) {
+        const ctx = heroCanvas.getContext('2d');
+        let width, height;
+        let points = [];
+        let particles = [];
+        let angleX = 0.25; // Tilted X axis
+        let angleY = 0;
+        const perspective = 450;
+        
+        function resizeHeroCanvas() {
+            if (!heroCanvas.parentElement) return;
+            const rect = heroCanvas.parentElement.getBoundingClientRect();
+            width = rect.width;
+            height = rect.height;
+            heroCanvas.width = width;
+            heroCanvas.height = height;
+            
+            generateGrid();
+        }
+        
+        function generateGrid() {
+            points = [];
+            const cols = 16;
+            const rows = 16;
+            const spacing = 40;
+            
+            const startX = -((cols - 1) * spacing) / 2;
+            const startZ = -((rows - 1) * spacing) / 2;
+            
+            for (let c = 0; c < cols; c++) {
+                for (let r = 0; r < rows; r++) {
+                    const x = startX + c * spacing;
+                    const z = startZ + r * spacing;
+                    const y = 60; // Base height offset
+                    points.push({ x, y, z, origY: y, c, r });
+                }
+            }
+            
+            particles = [];
+            for (let i = 0; i < 35; i++) {
+                particles.push({
+                    x: (Math.random() - 0.5) * 450,
+                    y: Math.random() * 150 - 50,
+                    z: (Math.random() - 0.5) * 450,
+                    speedY: -0.4 - Math.random() * 0.6,
+                    size: Math.random() * 1.5 + 0.8
+                });
+            }
+        }
+        
+        window.addEventListener('resize', resizeHeroCanvas, { passive: true });
+        
+        resizeHeroCanvas();
+        
+        let frameCount = 0;
+        
+        function animate3DBackground() {
+            if (!document.getElementById('hero-3d-canvas')) return; // Exit if element removed
+            ctx.clearRect(0, 0, width, height);
+            frameCount++;
+            
+            angleY += 0.0012; // Rotate yaw slowly
+            
+            const cosX = Math.cos(angleX);
+            const sinX = Math.sin(angleX);
+            const cosY = Math.cos(angleY);
+            const sinY = Math.sin(angleY);
+            
+            const centerX = width / 2;
+            const centerY = height / 2 - 10;
+            
+            const gridMap = {};
+            const cols = 16;
+            const rows = 16;
+            
+            // 1. Calculate and Project Points
+            points.forEach(p => {
+                const distFromCenter = Math.sqrt(p.x * p.x + p.z * p.z);
+                const waveY = p.origY + Math.sin(distFromCenter * 0.018 - frameCount * 0.025) * 20;
+                
+                // Yaw Y rotation
+                let x1 = p.x * cosY - p.z * sinY;
+                let z1 = p.x * sinY + p.z * cosY;
+                
+                // Pitch X rotation
+                let y2 = waveY * cosX - z1 * sinX;
+                let z2 = waveY * sinX + z1 * cosX;
+                
+                const scale = perspective / (perspective + z2);
+                const px = centerX + x1 * scale;
+                const py = centerY + y2 * scale;
+                
+                gridMap[`${p.c}_${p.r}`] = { px, py, z: z2, visible: z2 > -perspective };
+            });
+            
+            // 2. Draw Connected Grid Lines
+            ctx.lineWidth = 0.7;
+            for (let c = 0; c < cols; c++) {
+                for (let r = 0; r < rows; r++) {
+                    const pCurrent = gridMap[`${c}_${r}`];
+                    if (!pCurrent || !pCurrent.visible) continue;
+                    
+                    const depthFactor = Math.max(0, 1 - pCurrent.z / 350);
+                    
+                    if (c < cols - 1) {
+                        const pRight = gridMap[`${c+1}_${r}`];
+                        if (pRight && pRight.visible) {
+                            const alpha = 0.09 * depthFactor;
+                            ctx.strokeStyle = `rgba(0, 255, 136, ${alpha})`;
+                            ctx.beginPath();
+                            ctx.moveTo(pCurrent.px, pCurrent.py);
+                            ctx.lineTo(pRight.px, pRight.py);
+                            ctx.stroke();
+                        }
+                    }
+                    
+                    if (r < rows - 1) {
+                        const pBottom = gridMap[`${c}_${r+1}`];
+                        if (pBottom && pBottom.visible) {
+                            const alpha = 0.09 * depthFactor;
+                            ctx.strokeStyle = `rgba(0, 180, 255, ${alpha})`;
+                            ctx.beginPath();
+                            ctx.moveTo(pCurrent.px, pCurrent.py);
+                            ctx.lineTo(pBottom.px, pBottom.py);
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+            
+            // 3. Draw Rising 3D Particles
+            particles.forEach(p => {
+                p.y += p.speedY;
+                if (p.y < -100) {
+                    p.y = 120;
+                    p.x = (Math.random() - 0.5) * 450;
+                    p.z = (Math.random() - 0.5) * 450;
+                }
+                
+                const waveOffset = Math.sin(frameCount * 0.015 + p.y * 0.06) * 12;
+                const actualX = p.x + waveOffset;
+                
+                let x1 = actualX * cosY - p.z * sinY;
+                let z1 = actualX * sinY + p.z * cosY;
+                let y2 = p.y * cosX - z1 * sinX;
+                let z2 = p.y * sinX + z1 * cosX;
+                
+                if (z2 > -perspective) {
+                    const scale = perspective / (perspective + z2);
+                    const px = centerX + x1 * scale;
+                    const py = centerY + y2 * scale;
+                    
+                    const depthFactor = Math.max(0, 1 - z2 / 350);
+                    const alpha = 0.3 * depthFactor;
+                    
+                    ctx.fillStyle = `rgba(0, 255, 136, ${alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(px, py, p.size * scale, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = `rgba(0, 180, 255, ${alpha * 0.35})`;
+                    ctx.beginPath();
+                    ctx.arc(px, py, p.size * scale * 2.5, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+            
+            requestAnimationFrame(animate3DBackground);
+        }
+        
+        animate3DBackground();
+    }
+
     // ---- Particle Canvas System ----
     const canvas = document.getElementById('particle-canvas');
     if (canvas) {

@@ -305,13 +305,13 @@ main {
     overflow: hidden;
     pointer-events: none;
 }
-
-.hero-video-bg video {
+#hero-3d-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    opacity: 0.16;
-    filter: saturate(1.3) hue-rotate(30deg);
+    display: block;
 }
 
 .video-overlay {
