@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // ---- Scroll Reveal Animation ----
-    const revealElements = document.querySelectorAll('.glass-card, .hero-stat, .state-card, .feature-card, .tech-card');
+    const revealElements = document.querySelectorAll('.glass-card:not(#advisor-panel), .hero-stat, .state-card, .feature-card, .tech-card');
     if ('IntersectionObserver' in window && revealElements.length > 0) {
         const revealObserver = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ---- Interactive Card Mouse Glow Track ----
-    const glowCards = document.querySelectorAll('.glass-card, .feature-card, .tech-card');
+    const glowCards = document.querySelectorAll('.glass-card:not(#advisor-panel), .feature-card, .tech-card');
     glowCards.forEach(card => {
         card.addEventListener('mousemove', (e) => {
             const rect = card.getBoundingClientRect();
