@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dashboard | AgriClimate AI</title>
+    <meta name="description" content="Your personal farming dashboard — prediction history, saved farm profiles, and statistics.">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/style.css">
+    <style>
+        .dashboard-main { padding: 2rem 5%; max-width: 1400px; margin: 0 auto; }
+        .dashboard-hero { text-align: center; margin: 3rem 0 2rem; }
+        .dashboard-hero h2 { font-size: 2.5rem; }
+        .dashboard-hero p { color: var(--text-muted); font-size: 1.1rem; margin-top: 0.5rem; }
+
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+        .stat-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1.5rem; text-align: center; transition: transform 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .stat-number { font-size: 2rem; font-weight: 700; color: #34d399; }
+        .stat-label { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.2rem; }
+
+        .history-section { margin: 3rem 0; }
+        .history-section h3 { font-size: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem; }
+        .history-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+        .history-card { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 1.5rem; position: relative; animation: fadeInUp 0.4s ease; transition: all 0.3s; }
+        .history-card:hover { border-color: #10b981; transform: translateY(-3px); box-shadow: 0 8px 25px rgba(16,185,129,0.15); }
+        .history-crop-name { font-size: 1.5rem; font-weight: 700; color: #34d399; text-transform: capitalize; margin-bottom: 0.5rem; }
+        .history-meta { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.8rem; }
+        .history-tag { background: rgba(255,255,255,0.07); border: 1px solid var(--glass-border); border-radius: 20px; padding: 0.2rem 0.7rem; font-size: 0.8rem; color: var(--text-muted); }
+        .history-date { position: absolute; top: 1rem; right: 1rem; font-size: 0.75rem; color: var(--text-muted); }
+        .history-delete-btn { background: transparent; border: 1px solid rgba(239,68,68,0.3); color: #ef4444; border-radius: 6px; padding: 0.3rem 0.7rem; font-size: 0.8rem; cursor: pointer; margin-top: 1rem; transition: all 0.2s; }
+        .history-delete-btn:hover { background: rgba(239,68,68,0.1); }
+
+        .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-muted); }
+        .empty-state .empty-icon { font-size: 4rem; margin-bottom: 1rem; opacity: 0.4; }
+        .empty-state p { margin-bottom: 1.5rem; }
+
+        .farm-profile-section { margin: 3rem 0; }
+        .profile-form { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .profile-save-btn { grid-column: 1 / -1; background: linear-gradient(135deg, #10b981, #3b82f6); border: none; color: white; padding: 1rem; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; }
+        .profile-save-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(16,185,129,0.3); }
+
+        .clear-all-btn { background: transparent; border: 1px solid rgba(239,68,68,0.4); color: #ef4444; padding: 0.5rem 1.2rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; }
+        .clear-all-btn:hover { background: rgba(239,68,68,0.1); }
+        .section-action-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem; }
+
+        @media (max-width: 768px) {
+            .profile-form { grid-template-columns: 1fr; }
+            .stats-row { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation"></div>
+
+    <header class="glass-header">
+        <div class="logo">
+            <span class="icon">🌱</span>
+            <h1>AgriClimate AI</h1>
+        </div>
+        <nav>
+            <a href="/app">← Back to Dashboard</a>
+            <a href="#history">Prediction History</a>
+            <a href="#farm-profile">Farm Profile</a>
+            <a href="#" id="logout-btn">Logout</a>
+        </nav>
+    </header>
+
+    <div class="dashboard-main">
+        <div class="dashboard-hero">
+            <h2>👤 My <span class="highlight">Farming Dashboard</span></h2>
+            <p id="welcome-msg">Welcome back, Farmer! Your personalized agriculture intelligence hub.</p>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="stats-row" id="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon">🌾</div>
+                <div class="stat-number" id="stat-predictions">0</div>
+                <div class="stat-label">Total Predictions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🏆</div>
+                <div class="stat-number" id="stat-top-crop">--</div>
+                <div class="stat-label">Most Predicted Crop</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📍</div>
+                <div class="stat-number" id="stat-states">0</div>
+                <div class="stat-label">States Analyzed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📅</div>
+                <div class="stat-number" id="stat-days">0</div>
+                <div class="stat-label">Days Active</div>
+            </div>
+        </div>
+
+        <!-- Prediction History -->
+        <section class="history-section glass-card" id="history">
+            <div class="section-action-row">
+                <h3 style="border:none; padding:0; margin:0">📋 Prediction History</h3>
+                <button class="clear-all-btn" id="clear-all-btn">🗑️ Clear All</button>
+            </div>
+            <div id="history-grid" class="history-grid">
+                <!-- Injected by JS -->
+            </div>
+        </section>
+
+        <!-- Farm Profile -->
+        <section class="farm-profile-section glass-card" id="farm-profile">
+            <h3 style="border-bottom: 1px solid var(--glass-border); padding-bottom: 1rem; margin-bottom: 2rem;">🏡 My Farm Profile</h3>
+            <div class="profile-form">
+                <div class="input-group">
+                    <label>Farmer Name</label>
+                    <input type="text" id="farm-name" placeholder="Your name">
+                </div>
+                <div class="input-group">
+                    <label>State / Region</label>
+                    <input type="text" id="farm-state" placeholder="e.g. Punjab, Maharashtra">
+                </div>
+                <div class="input-group">
+                    <label>Farm Size (Hectares)</label>
+                    <input type="number" id="farm-size" placeholder="e.g. 2.5" step="0.1">
+                </div>
+                <div class="input-group">
+                    <label>Primary Crop</label>
+                    <input type="text" id="farm-crop" placeholder="e.g. Rice, Wheat">
+                </div>
+                <div class="input-group">
+                    <label>Soil Type</label>
+                    <input type="text" id="farm-soil" placeholder="e.g. Alluvial, Black Cotton">
+                </div>
+                <div class="input-group">
+                    <label>Irrigation Method</label>
+                    <select id="farm-irrigation" class="styled-select">
+                        <option>Drip Irrigation</option>
+                        <option>Sprinkler</option>
+                        <option>Flood / Surface</option>
+                        <option>Rainfed</option>
+                        <option>Canal Irrigation</option>
+                    </select>
+                </div>
+                <button class="profile-save-btn" id="save-profile-btn">💾 Save Farm Profile</button>
+            </div>
+            <div id="profile-saved-msg" class="hidden" style="text-align:center; color:#34d399; margin-top:1rem; font-weight:600;">✅ Profile saved successfully!</div>
+        </section>
+    </div>
+
+    <footer class="site-footer" style="margin-top: 4rem;">
+        <div style="text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+            © 2024 AgriClimate AI — Resilient Agriculture for a Living Planet.
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Auth check
+            const user = localStorage.getItem('agriclimate_user');
+            if (!user) { window.location.href = '/'; return; }
+            document.getElementById('welcome-msg').textContent = `Welcome back, ${user}! Your personalized agriculture intelligence hub.`;
+
+            // Logout
+            document.getElementById('logout-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                localStorage.removeItem('agriclimate_user');
+                window.location.href = '/';
+            });
+
+            // Load history
+            loadHistory();
+            loadProfile();
+            loadStats();
+
+            // Save profile
+            document.getElementById('save-profile-btn').addEventListener('click', () => {
+                const profile = {
+                    name: document.getElementById('farm-name').value,
+                    state: document.getElementById('farm-state').value,
+                    size: document.getElementById('farm-size').value,
+                    crop: document.getElementById('farm-crop').value,
+                    soil: document.getElementById('farm-soil').value,
+                    irrigation: document.getElementById('farm-irrigation').value,
+                };
+                localStorage.setItem('agriclimate_farm_profile', JSON.stringify(profile));
+                const msg = document.getElementById('profile-saved-msg');
+                msg.classList.remove('hidden');
+                setTimeout(() => msg.classList.add('hidden'), 3000);
+            });
+
+            // Clear all history
+            document.getElementById('clear-all-btn').addEventListener('click', () => {
+                if (confirm('Delete all prediction history?')) {
+                    localStorage.removeItem('agriclimate_history');
+                    loadHistory();
+                    loadStats();
+                }
+            });
+        });
+
+        function loadProfile() {
+            const saved = localStorage.getItem('agriclimate_farm_profile');
+            if (!saved) return;
+            const p = JSON.parse(saved);
+            if (p.name) document.getElementById('farm-name').value = p.name;
+            if (p.state) document.getElementById('farm-state').value = p.state;
+            if (p.size) document.getElementById('farm-size').value = p.size;
+            if (p.crop) document.getElementById('farm-crop').value = p.crop;
+            if (p.soil) document.getElementById('farm-soil').value = p.soil;
+            if (p.irrigation) document.getElementById('farm-irrigation').value = p.irrigation;
+        }
+
+        function loadStats() {
+            const history = JSON.parse(localStorage.getItem('agriclimate_history') || '[]');
+            document.getElementById('stat-predictions').textContent = history.length;
+            
+            // Top crop
+            const cropCounts = {};
+            history.forEach(h => {
+                cropCounts[h.crop] = (cropCounts[h.crop] || 0) + 1;
+            });
+            const topCrop = Object.entries(cropCounts).sort((a,b) => b[1]-a[1])[0];
+            document.getElementById('stat-top-crop').textContent = topCrop ? topCrop[0] : '--';
+
+            // Unique states
+            const uniqueStates = [...new Set(history.map(h => h.state).filter(Boolean))];
+            document.getElementById('stat-states').textContent = uniqueStates.length;
+
+            // Days since first prediction
+            if (history.length > 0) {
+                const first = new Date(history[history.length - 1].timestamp);
+                const days = Math.ceil((new Date() - first) / (1000 * 60 * 60 * 24));
+                document.getElementById('stat-days').textContent = days;
+            }
+        }
+
+        function loadHistory() {
+            const grid = document.getElementById('history-grid');
+            const history = JSON.parse(localStorage.getItem('agriclimate_history') || '[]');
+            
+            if (history.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1">
+                        <div class="empty-icon">🌱</div>
+                        <p>No predictions yet. Go to the main dashboard and analyze your soil!</p>
+                        <a href="/app" class="primary-btn" style="display:inline-flex; text-decoration:none; padding: 0.8rem 2rem; max-width:200px; margin: 0 auto;">Go to Dashboard</a>
+                    </div>`;
+                return;
+            }
+
+            grid.innerHTML = '';
+            [...history].reverse().forEach((entry, i) => {
+                const card = document.createElement('div');
+                card.className = 'history-card';
+                const date = new Date(entry.timestamp).toLocaleDateString('en-IN', { dateStyle: 'medium' });
+                card.innerHTML = `
+                    <span class="history-date">${date}</span>
+                    <div class="history-crop-name">🌾 ${entry.crop}</div>
+                    ${entry.state ? `<div style="color: var(--text-muted); font-size:0.9rem; margin-bottom:0.5rem;">📍 ${entry.state}</div>` : ''}
+                    <div class="history-meta">
+                        <span class="history-tag">N: ${entry.N ?? '--'}</span>
+                        <span class="history-tag">P: ${entry.P ?? '--'}</span>
+                        <span class="history-tag">K: ${entry.K ?? '--'}</span>
+                        <span class="history-tag">pH: ${entry.ph ?? '--'}</span>
+                        <span class="history-tag">🌡️ ${entry.temperature ?? '--'}°C</span>
+                        <span class="history-tag">💧 ${entry.rainfall ?? '--'}mm</span>
+                    </div>
+                    <button class="history-delete-btn" onclick="deleteHistory(${history.length - 1 - i})">🗑️ Delete</button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function deleteHistory(index) {
+            const history = JSON.parse(localStorage.getItem('agriclimate_history') || '[]');
+            history.splice(index, 1);
+            localStorage.setItem('agriclimate_history', JSON.stringify(history));
+            loadHistory();
+            loadStats();
+        }
+    </script>
+</body>
+</html>

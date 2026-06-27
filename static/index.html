@@ -1,12 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AgriClimate AI | Intelligent Crop Recommendation</title>
+    <meta name="description" content="AI-powered crop recommendation, disease detection, market prices, and irrigation scheduling for Indian farmers.">
+    <meta name="theme-color" content="#060b14">
     
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     
     <!-- Leaflet CSS for Map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
@@ -14,25 +16,60 @@
     <link rel="stylesheet" href="/assets/style.css">
 </head>
 <body>
+    <!-- Scroll Progress Bar -->
+    <div id="scroll-progress"></div>
+
+    <!-- Aurora Background -->
     <div class="background-animation"></div>
-    
+    <div class="aurora-blob3"></div>
+
+    <!-- Particle Canvas -->
+    <canvas id="particle-canvas"></canvas>
+
     <header class="glass-header">
         <div class="logo">
             <span class="icon">🌱</span>
             <h1>AgriClimate AI</h1>
         </div>
         <nav>
-            <a href="/app">Dashboard</a>
-            <a href="#map-view">Satellite Map</a>
-            <a href="#" id="auth-action">Logout</a>
+            <a href="/app" data-i18n="nav_dashboard">Dashboard</a>
+            <a href="#disease-section" data-i18n="nav_disease">Disease AI</a>
+            <a href="#calendar-section" data-i18n="nav_calendar">Crop Calendar</a>
+            <a href="#market-section" data-i18n="nav_market">Market Prices</a>
+            <a href="#schemes-section" data-i18n="nav_schemes">Gov Schemes</a>
+            <a href="#map-view" data-i18n="nav_map">Satellite Map</a>
+            <a href="/dashboard" data-i18n="nav_history">My Dashboard</a>
+            <button id="lang-toggle" class="lang-btn" title="Switch Language">🌐 EN</button>
+            <a href="#" id="auth-action" data-i18n="nav_logout">Logout</a>
         </nav>
     </header>
+
 
     <main>
         <section id="dashboard" class="hero-section">
             <div class="hero-content">
-                <h2>Predict the <span class="highlight">Best Crop</span> for your Land</h2>
+                <h2>Predict the <span class="highlight" data-text="Best Crop">Best Crop</span> for your Land</h2>
                 <p>Leverage cutting-edge Machine Learning and real-time climatic intelligence to optimize your agricultural yield. Enter your soil and weather parameters below to get instant AI-driven recommendations.</p>
+            </div>
+
+            <!-- Animated Hero Stats -->
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <span class="stat-value" data-target="22" data-suffix="+">0</span>
+                    <span class="stat-label">Crops Supported</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="stat-value" data-target="97" data-suffix="%">0</span>
+                    <span class="stat-label">AI Accuracy</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="stat-value" data-target="29" data-suffix="+">0</span>
+                    <span class="stat-label">Indian States</span>
+                </div>
+                <div class="hero-stat">
+                    <span class="stat-value" data-target="7" data-suffix=" APIs">0</span>
+                    <span class="stat-label">Live Data Sources</span>
+                </div>
             </div>
 
             <div class="prediction-container glass-card">
@@ -75,18 +112,64 @@
                 </form>
 
                 <div id="result-box" class="result-box hidden">
-                    <h4>Recommended Crop:</h4>
+                    <div class="result-header">
+                        <h4>Recommended Crop:</h4>
+                        <button id="download-report-btn" class="download-report-btn">🖨️ Download Soil Card</button>
+                    </div>
                     <h2 id="predicted-crop">Rice</h2>
                     <p class="confidence" id="confidence-level">Confidence: High</p>
                     <p class="state-analysis-desc" id="state-analysis-text"></p>
+                    
+                    <div class="chart-and-booster">
+                        <div class="chart-wrapper">
+                            <canvas id="npk-chart"></canvas>
+                        </div>
+                        <div id="fertilizer-advice" class="fertilizer-advice">
+                            <!-- JS will inject fertilizer recommendations here -->
+                        </div>
+                    </div>
+
+                    <!-- Phase 4: Yield Prediction Card -->
+                    <div id="yield-card" class="yield-card hidden">
+                        <h4>📊 Yield & Revenue Estimate</h4>
+                        <div class="yield-grid">
+                            <div class="yield-item">
+                                <span class="yield-label">Expected Yield</span>
+                                <strong id="yield-value">--</strong>
+                                <span class="yield-unit">tons/hectare</span>
+                            </div>
+                            <div class="yield-item">
+                                <span class="yield-label">Quality Index</span>
+                                <strong id="yield-quality">--</strong>
+                            </div>
+                            <div class="yield-item">
+                                <span class="yield-label">Est. Revenue</span>
+                                <strong id="yield-revenue">--</strong>
+                            </div>
+                            <div class="yield-item">
+                                <span class="yield-label">Fertilizer Cost</span>
+                                <strong id="yield-cost">--</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Phase 5: Irrigation Scheduler -->
+                    <div id="irrigation-card" class="irrigation-card hidden">
+                        <div class="irrigation-header">
+                            <h4>💧 7-Day Irrigation Schedule</h4>
+                            <span id="irrigation-source" class="irrigation-source-tag"></span>
+                        </div>
+                        <div id="irrigation-grid" class="irrigation-grid"></div>
+                    </div>
                 </div>
+
             </div>
         </section>
 
         <!-- New State Explorer Section -->
-        <section id="explore-data" class="explore-section">
+        <section id="explore-data" class="explore-section reveal">
             <div class="section-header">
-                <h2>Explore Data</h2>
+                <h2>🗺️ Explore <span class="highlight" data-text="State Data">State Data</span></h2>
                 <p>Click on an Indian state to instantly analyze its historical weather, verify soil dynamics, and predict the best optimal crop.</p>
             </div>
             
@@ -97,35 +180,287 @@
 
         <section id="map-view" class="map-section">
             <div class="section-header">
-                <h2>Regional <span class="highlight">Satellite Intelligence</span></h2>
-                <p>Click anywhere on the map to analyze regional agricultural topography via Open-Source Satellite Tiles.</p>
+                <h2>🗺️ Advanced <span class="highlight">AgriMap Intelligence</span></h2>
+                <p>Google Maps-style interactive map — switch layers, search locations, analyze risk zones, and get live weather for any point in India.</p>
             </div>
-            <div class="map-container glass-card">
+
+            <!-- Map Toolbar (Google Maps-style) -->
+            <div class="map-toolbar glass-card">
+                <div class="map-search-box">
+                    <span class="map-search-icon">🔍</span>
+                    <input type="text" id="map-search-input" placeholder="Search location in India..." autocomplete="off">
+                    <div id="map-search-results" class="map-search-results hidden"></div>
+                </div>
+                <div class="map-toolbar-actions">
+                    <button class="map-tool-btn active" id="layer-satellite" title="Satellite View">🛰️ Satellite</button>
+                    <button class="map-tool-btn" id="layer-street" title="Street View">🗺️ Street</button>
+                    <button class="map-tool-btn" id="layer-terrain" title="Terrain">⛰️ Terrain</button>
+                    <button class="map-tool-btn" id="layer-dark" title="Dark Mode">🌙 Dark</button>
+                    <div class="map-tool-divider"></div>
+                    <button class="map-tool-btn" id="map-gps-btn" title="My Location">📍 My Location</button>
+                    <button class="map-tool-btn" id="map-risk-toggle" title="Toggle Risk Zones">⚠️ Risk Zones</button>
+                    <button class="map-tool-btn" id="map-fullscreen-btn" title="Fullscreen">⛶ Fullscreen</button>
+                </div>
+            </div>
+
+            <!-- Main Map Container -->
+            <div class="map-container glass-card" id="map-main-container">
                 <div id="map"></div>
-                <div class="map-overlay" id="location-info">
-                    <h3 id="overlay-state-name" class="highlight-green">Select a Region</h3>
-                    <div id="weather-details" class="weather-details hidden">
-                        <div class="weather-grid">
-                            <div class="w-item"><span>🌡️ Temp:</span> <strong id="overlay-temp">-</strong>°C</div>
-                            <div class="w-item"><span>💧 Humidity:</span> <strong id="overlay-humidity">-</strong>%</div>
-                            <div class="w-item"><span>🌧️ Rainfall:</span> <strong id="overlay-rain">-</strong>mm</div>
-                            <div class="w-item"><span>🌱 Soil:</span> <strong id="overlay-soil">-</strong></div>
-                            <div class="w-item full-width"><span>☁️ Condition:</span> <strong id="overlay-condition">-</strong></div>
-                        </div>
-                        <div id="risk-alert-box" class="risk-alert hidden">
-                            <span class="alert-icon">⚠️</span>
+
+                <!-- Map Stats Bar (Google Maps style bottom bar) -->
+                <div class="map-stats-bar" id="map-stats-bar">
+                    <span id="map-coords-display">📍 Click map to get coordinates</span>
+                    <span class="map-stats-divider">|</span>
+                    <span id="map-zoom-display">Zoom: 5</span>
+                    <span class="map-stats-divider">|</span>
+                    <span id="map-layer-display">Layer: Satellite</span>
+                </div>
+
+                <!-- Rich Side Panel (Advanced overlay) -->
+                <div class="map-side-panel glass-panel" id="location-info">
+                    <div class="side-panel-header">
+                        <div class="side-panel-title">
+                            <span id="panel-state-icon">🗺️</span>
                             <div>
-                                <span class="alert-title">EARLY WARNING</span>
-                                <strong id="overlay-risk">None</strong>
+                                <h3 id="overlay-state-name" class="highlight-green">India AgriMap</h3>
+                                <span id="panel-state-subtitle" style="font-size:0.75rem;color:var(--text-muted)">Click any state or region</span>
+                            </div>
+                        </div>
+                        <button class="panel-minimize-btn" id="panel-minimize-btn" title="Minimize">−</button>
+                    </div>
+
+                    <div id="panel-content">
+                        <!-- Default state -->
+                        <div id="panel-default" style="padding:1rem 0; color:var(--text-muted); font-size:0.9rem; text-align:center;">
+                            <div style="font-size:2.5rem;margin-bottom:0.5rem;">🇮🇳</div>
+                            <p>Select a state card above or click anywhere on the map to analyze agricultural data.</p>
+                        </div>
+
+                        <!-- Weather Details (hidden until state selected) -->
+                        <div id="weather-details" class="weather-details hidden">
+                            <!-- Risk Alert -->
+                            <div id="risk-alert-box" class="risk-alert-v2 hidden">
+                                <span class="alert-icon">⚠️</span>
+                                <div>
+                                    <span class="alert-title">EARLY WARNING</span>
+                                    <strong id="overlay-risk">None</strong>
+                                </div>
+                            </div>
+
+                            <!-- Key Metrics Grid -->
+                            <div class="panel-metrics-grid">
+                                <div class="panel-metric">
+                                    <span class="pm-icon">🌡️</span>
+                                    <div>
+                                        <span class="pm-label">Temperature</span>
+                                        <strong id="overlay-temp">--</strong><span class="pm-unit">°C</span>
+                                    </div>
+                                </div>
+                                <div class="panel-metric">
+                                    <span class="pm-icon">💧</span>
+                                    <div>
+                                        <span class="pm-label">Humidity</span>
+                                        <strong id="overlay-humidity">--</strong><span class="pm-unit">%</span>
+                                    </div>
+                                </div>
+                                <div class="panel-metric">
+                                    <span class="pm-icon">🌧️</span>
+                                    <div>
+                                        <span class="pm-label">Rainfall</span>
+                                        <strong id="overlay-rain">--</strong><span class="pm-unit">mm/yr</span>
+                                    </div>
+                                </div>
+                                <div class="panel-metric">
+                                    <span class="pm-icon">🌿</span>
+                                    <div>
+                                        <span class="pm-label">Soil Type</span>
+                                        <strong id="overlay-soil">--</strong>
+                                    </div>
+                                </div>
+                                <div class="panel-metric full-span">
+                                    <span class="pm-icon">☁️</span>
+                                    <div>
+                                        <span class="pm-label">Condition</span>
+                                        <strong id="overlay-condition">--</strong>
+                                    </div>
+                                </div>
+                                <div class="panel-metric">
+                                    <span class="pm-icon">📍</span>
+                                    <div>
+                                        <span class="pm-label">Latitude</span>
+                                        <strong id="lat-val">--</strong>
+                                    </div>
+                                </div>
+                                <div class="panel-metric">
+                                    <span class="pm-icon">📍</span>
+                                    <div>
+                                        <span class="pm-label">Longitude</span>
+                                        <strong id="lng-val">--</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="panel-actions">
+                                <button class="panel-action-btn primary" id="panel-predict-btn">🌾 Predict Crop</button>
+                                <button class="panel-action-btn secondary" id="panel-calendar-btn">📅 View Calendar</button>
                             </div>
                         </div>
                     </div>
-                    <p id="overlay-default-text" style="color:var(--text-muted); font-size:0.9rem; margin-top:10px;">Select a state card from above to analyze weather.</p>
+                </div>
+
+                <!-- Mini Legend -->
+                <div class="map-legend" id="map-legend">
+                    <div class="legend-title">Risk Zones</div>
+                    <div class="legend-item"><span class="legend-dot severe"></span>Severe</div>
+                    <div class="legend-item"><span class="legend-dot high"></span>High</div>
+                    <div class="legend-item"><span class="legend-dot moderate"></span>Moderate</div>
+                    <div class="legend-item"><span class="legend-dot safe"></span>Safe</div>
+                </div>
+            </div>
+
+            <!-- 7-Day Weather Forecast Container -->
+            <div id="weather-forecast-container" class="weather-forecast-container glass-card hidden">
+                <h3>📡 7-Day Meteorological Forecast <span id="forecast-location-name" class="highlight"></span></h3>
+                <p class="forecast-subtitle">Live weather data via Open-Meteo API (No API key required)</p>
+                <div class="forecast-grid" id="forecast-grid">
+                    <!-- Forecast items will be injected here -->
                 </div>
             </div>
         </section>
 
-        <!-- New Contact Section -->
+
+        <!-- Disease Detection Section -->
+        <section id="disease-section" class="feature-section reveal">
+            <div class="section-header">
+                <h2>🌿 AI <span class="highlight" data-text="Disease Detection">Disease Detection</span></h2>
+                <p data-i18n="disease_subtitle">Upload a photo of your crop leaf to get instant AI-powered disease diagnosis and treatment advice.</p>
+            </div>
+            <div class="disease-container glass-card">
+                <div class="disease-upload-zone" id="disease-upload-zone">
+                    <div class="upload-icon">📸</div>
+                    <h3 data-i18n="upload_title">Drop or Click to Upload Crop Image</h3>
+                    <p data-i18n="upload_subtitle">Supports JPG, PNG — Max 10MB</p>
+                    <input type="file" id="disease-image-input" accept="image/*" style="display:none">
+                    <div class="upload-actions">
+                        <button class="upload-btn" id="upload-btn" onclick="document.getElementById('disease-image-input').click()">📁 Choose File</button>
+                    </div>
+                </div>
+                <div class="disease-crop-row">
+                    <div class="input-group" style="flex:1">
+                        <label data-i18n="crop_hint_label">Crop Name (Optional, improves accuracy)</label>
+                        <input type="text" id="disease-crop-name" placeholder="e.g. Rice, Wheat, Tomato...">
+                    </div>
+                    <button class="primary-btn" id="analyze-disease-btn" style="margin-top:1.5rem; max-width:200px" disabled>
+                        <span>🔬 Analyze</span>
+                        <div class="spinner hidden" id="disease-spinner"></div>
+                    </button>
+                </div>
+                <div id="disease-preview-container" class="disease-preview hidden">
+                    <img id="disease-preview-img" src="" alt="Uploaded crop image">
+                </div>
+                <div id="disease-result" class="disease-result hidden"></div>
+            </div>
+        </section>
+
+        <!-- Crop Calendar Section -->
+        <section id="calendar-section" class="feature-section reveal">
+            <div class="section-header">
+                <h2>📅 <span class="highlight" data-text="Crop Calendar">Crop Calendar</span></h2>
+                <p data-i18n="calendar_subtitle">Monthly planting &amp; harvesting guide for every Indian state. Select a state to see its seasonal crop cycle.</p>
+            </div>
+            <div class="calendar-container glass-card">
+                <div class="calendar-controls">
+                    <select id="calendar-state-select" class="styled-select">
+                        <option value="">-- Select State --</option>
+                        <option>Punjab</option><option>Haryana</option><option>Uttar Pradesh</option>
+                        <option>Bihar</option><option>West Bengal</option><option>Assam</option>
+                        <option>Odisha</option><option>Andhra Pradesh</option><option>Telangana</option>
+                        <option>Karnataka</option><option>Tamil Nadu</option><option>Kerala</option>
+                        <option>Maharashtra</option><option>Gujarat</option><option>Rajasthan</option>
+                        <option>Madhya Pradesh</option><option>Chhattisgarh</option><option>Jharkhand</option>
+                        <option>Himachal Pradesh</option><option>Jammu &amp; Kashmir</option>
+                        <option>Uttarakhand</option><option>Goa</option><option>Delhi</option>
+                    </select>
+                    <div class="season-tabs">
+                        <button class="season-tab active" data-season="all">All</button>
+                        <button class="season-tab kharif" data-season="Kharif">🌧️ Kharif</button>
+                        <button class="season-tab rabi" data-season="Rabi">❄️ Rabi</button>
+                        <button class="season-tab zaid" data-season="Zaid">☀️ Zaid</button>
+                    </div>
+                </div>
+                <div id="calendar-grid" class="calendar-grid">
+                    <div class="calendar-placeholder">
+                        <span>🌾</span>
+                        <p>Select a state to see the crop calendar</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Market Prices Section -->
+        <section id="market-section" class="feature-section reveal">
+            <div class="section-header">
+                <h2>💰 <span class="highlight" data-text="Market Intelligence">Market Intelligence</span></h2>
+                <p data-i18n="market_subtitle">Live mandi prices across India — track trends, compare crops, sell at the best price.</p>
+            </div>
+            <div class="market-container glass-card">
+                <div class="market-controls">
+                    <input type="text" id="market-search" placeholder="🔍 Search crop..." class="market-search-input">
+                    <button class="primary-btn" id="load-prices-btn" style="max-width:180px">
+                        <span>📊 Load Prices</span>
+                    </button>
+                    <span class="market-source-tag">Source: Agmarknet (Simulated)</span>
+                </div>
+                <div id="market-table-container" class="market-table-container hidden">
+                    <table class="market-table" id="market-table">
+                        <thead>
+                            <tr>
+                                <th>Crop</th>
+                                <th>Min Price</th>
+                                <th>Modal Price</th>
+                                <th>Max Price</th>
+                                <th>Trend</th>
+                                <th>7-Day Chart</th>
+                            </tr>
+                        </thead>
+                        <tbody id="market-tbody"></tbody>
+                    </table>
+                </div>
+                <div id="market-loading" class="market-loading hidden">
+                    <div class="spinner"></div><p>Fetching latest mandi prices...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================ -->
+        <!-- Phase 4: Yield Prediction & Phase 5: Irrigation are in result-box -->
+        <!-- (shown after crop prediction — see script.js) -->
+        <!-- ============================================ -->
+
+        <!-- Government Schemes Section -->
+        <section id="schemes-section" class="feature-section reveal">
+            <div class="section-header">
+                <h2>🏛️ <span class="highlight" data-text="Government Schemes">Government Schemes</span></h2>
+                <p data-i18n="schemes_subtitle">Discover PM-KISAN, Fasal Bima, Soil Health Card, and 7 more central government schemes for Indian farmers.</p>
+            </div>
+            <div class="schemes-container">
+                <div class="schemes-filter">
+                    <input type="text" id="schemes-search" placeholder="🔍 Search schemes..." class="market-search-input">
+                    <select id="schemes-crop-filter" class="styled-select">
+                        <option value="">All Crops</option>
+                        <option>Rice</option><option>Wheat</option><option>Cotton</option>
+                        <option>Maize</option><option>Sugarcane</option><option>Banana</option>
+                        <option>Mango</option><option>Coconut</option><option>Grapes</option>
+                    </select>
+                </div>
+                <div id="schemes-grid" class="schemes-grid">
+                    <!-- Injected by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
         <section id="contact" class="contact-section">
             <div class="contact-container">
                 <div class="contact-info">
@@ -190,13 +525,111 @@
         </div>
     </footer>
 
-    <!-- Leaflet JS -->
+    <!-- Floating AI Advisor Bubble & Widget -->
+    <div id="advisor-bubble" class="advisor-bubble">
+        <span class="bubble-icon">🤖</span>
+        <span class="bubble-badge hidden">1</span>
+        <span class="bubble-pulse"></span>
+    </div>
+    
+    <div id="advisor-panel" class="advisor-panel glass-card hidden">
+        <!-- Header -->
+        <div class="advisor-header">
+            <div class="advisor-title">
+                <div class="advisor-avatar-wrap">
+                    <span class="advisor-avatar">🤖</span>
+                    <span class="advisor-status-dot"></span>
+                </div>
+                <div>
+                    <h4>AgriClimate Advisor</h4>
+                    <div class="advisor-subtitle-row">
+                        <span class="advisor-status">🟢 Online • Gemini Powered</span>
+                        <span id="lang-detected-badge" class="lang-badge hidden">🌐 Auto</span>
+                    </div>
+                </div>
+            </div>
+            <div class="advisor-header-actions">
+                <button id="clear-chat-btn" class="advisor-icon-btn" title="Clear chat">🗑️</button>
+                <button id="close-advisor" class="close-btn">&times;</button>
+            </div>
+        </div>
+
+        <!-- Language chips -->
+        <div class="lang-chips">
+            <span class="lang-chip-label">🌐 Baat karo:</span>
+            <button class="lang-chip active" data-lang="auto">Auto</button>
+            <button class="lang-chip" data-lang="hi">हिंदी</button>
+            <button class="lang-chip" data-lang="hinglish">Hinglish</button>
+            <button class="lang-chip" data-lang="en">English</button>
+        </div>
+
+        <!-- Messages -->
+        <div id="advisor-messages" class="advisor-messages">
+            <div class="message bot-message">
+                <span class="msg-avatar">🤖</span>
+                <div class="msg-content">
+                    <p>Namaste! 🙏 Main hoon <strong>AgriClimate AI</strong> — aapka personal farm advisor!</p>
+                    <p>Aap mujhse <strong>Hindi, English, Hinglish</strong> — kisi bhi language mein baat kar sakte ho. Main sab samjhunga! 🌾</p>
+                    <p>Crop predict karo ya koi state select karo, phir koi bhi sawaal puchho! 💪</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Suggested questions (shown when empty) -->
+        <div id="suggested-questions" class="suggested-questions">
+            <div class="sq-label">💡 Puchho:</div>
+            <div class="sq-chips">
+                <button class="sq-chip" data-query="Mere khet ke liye best fertilizer kaunsa hai?">🧪 Best fertilizer kaunsa?</button>
+                <button class="sq-chip" data-query="Is crop mein paani kitna dena chahiye?">💧 Paani kitna dena chahiye?</button>
+                <button class="sq-chip" data-query="Pattiyaan peeli kyun ho rahi hain?">🍂 Pattiyaan peeli kyun?</button>
+                <button class="sq-chip" data-query="Organic farming kaise shuru karein?">🌿 Organic farming tips</button>
+                <button class="sq-chip" data-query="Mandi mein crop kab bechna chahiye?">💰 Mandi timing advice</button>
+                <button class="sq-chip" data-query="Keede (insects) se khet kaise bachayein?">🐛 Keede se kaise bachayein?</button>
+            </div>
+        </div>
+
+        <!-- Quick actions -->
+        <div class="advisor-quick-actions">
+            <button class="quick-btn" data-query="Is crop ki yield badhaane ke liye kya karein?">🚀 Yield Badhao</button>
+            <button class="quick-btn" data-query="Natural/organic keetenashak batao">🌿 Organic Tips</button>
+            <button class="quick-btn" data-query="NPK fertilizer ka sahi ratio kya hona chahiye?">🧪 NPK Ratio</button>
+            <button class="quick-btn" data-query="Mausam ke hisaab se kya precautions leni chahiye?">🌦️ Mausam Tips</button>
+        </div>
+
+        <!-- Input area -->
+        <form id="advisor-form" class="advisor-input-container">
+            <div class="advisor-input-wrap">
+                <textarea 
+                    id="advisor-input" 
+                    placeholder="Hindi, English, Hinglish — kuch bhi likhein... 🌾" 
+                    required 
+                    autocomplete="off"
+                    rows="1"
+                    maxlength="500"
+                ></textarea>
+                <div class="input-actions">
+                    <span id="char-count" class="char-count">0/500</span>
+                    <button type="button" id="voice-btn" class="voice-btn" title="Voice input">🎤</button>
+                    <button type="submit" class="send-btn" id="send-btn">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+
+    <!-- Leaflet JS, Chart.js & html2pdf.js -->
     <script>
         if (!localStorage.getItem("agriclimate_user")) {
             window.location.href = "/";
         }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="/assets/translations.js"></script>
     <script src="/assets/script.js"></script>
 </body>
 </html>
+
