@@ -1350,7 +1350,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if (badge) badge.classList.add('hidden');
             if (!advisorPanel.classList.contains('hidden')) {
                 advisorMessages.scrollTop = advisorMessages.scrollHeight;
-                advisorInput.focus({ preventScroll: true });
             }
         });
     }
@@ -1651,7 +1650,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 addChatMessage('Network error! Internet connection check karo aur dobara try karo. 📡', 'bot-message');
             } finally {
                 sendBtn.disabled = false;
-                advisorInput.focus({ preventScroll: true });
             }
         });
     }

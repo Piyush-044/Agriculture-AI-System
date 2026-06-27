@@ -3356,6 +3356,14 @@ textarea:focus {
     .map-legend { bottom: 230px; }
     .map-stats-bar { bottom: 60px; left: 1rem; right: 1rem; transform: none; font-size: 0.7rem; white-space: normal; text-align: center; }
     .panel-metrics-grid { grid-template-columns: 1fr; }
+    .advisor-panel {
+        width: calc(100% - 40px) !important;
+        height: 60vh !important;
+        max-height: 500px !important;
+        bottom: 95px !important;
+        right: 20px !important;
+        left: 20px !important;
+    }
 }
 
 /* ── Landing Page Styles ── */
