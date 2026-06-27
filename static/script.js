@@ -4,6 +4,64 @@ document.addEventListener("DOMContentLoaded", () => {
     // 0. PREMIUM ANIMATION ENGINE
     // =============================================
 
+    // ---- Range Slider Sync ----
+    const paramIds = ['N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall'];
+    paramIds.forEach(id => {
+        const numInput = document.getElementById(id);
+        const sliderInput = document.getElementById(id + '-slider');
+        const badge = document.getElementById(id + '-badge');
+        
+        if (numInput && sliderInput) {
+            // Slider to input
+            sliderInput.addEventListener('input', () => {
+                numInput.value = sliderInput.value;
+                if (badge) badge.textContent = sliderInput.value;
+                numInput.dispatchEvent(new Event('input'));
+            });
+            
+            // Input to slider
+            numInput.addEventListener('input', () => {
+                let val = parseFloat(numInput.value);
+                if (isNaN(val)) val = parseFloat(sliderInput.min) || 0;
+                sliderInput.value = val;
+                if (badge) badge.textContent = numInput.value;
+            });
+        }
+    });
+
+    // ---- Scroll Reveal Animation ----
+    const revealElements = document.querySelectorAll('.glass-card, .hero-stat, .state-card, .feature-card, .tech-card');
+    if ('IntersectionObserver' in window && revealElements.length > 0) {
+        const revealObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active-reveal');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        });
+        
+        revealElements.forEach(el => {
+            el.classList.add('reveal-on-scroll');
+            revealObserver.observe(el);
+        });
+    }
+
+    // ---- Interactive Card Mouse Glow Track ----
+    const glowCards = document.querySelectorAll('.glass-card, .feature-card, .tech-card');
+    glowCards.forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            card.style.setProperty('--mouse-x', `${x}px`);
+            card.style.setProperty('--mouse-y', `${y}px`);
+        });
+    });
+
     // ---- Scroll Progress Bar ----
     const scrollProgress = document.getElementById('scroll-progress');
     if (scrollProgress) {

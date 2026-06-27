@@ -120,32 +120,60 @@
                 <form id="prediction-form">
                     <div class="form-grid">
                         <div class="input-group">
-                            <label for="N">Nitrogen (N)</label>
-                            <input type="number" id="N" required placeholder="e.g. 90" min="0" max="140">
+                            <div class="input-label-row">
+                                <label for="N">Nitrogen (N)</label>
+                                <span class="input-val-badge" id="N-badge">90</span>
+                            </div>
+                            <input type="number" id="N" required placeholder="e.g. 90" min="0" max="140" value="90">
+                            <input type="range" class="range-slider" id="N-slider" min="0" max="140" value="90">
                         </div>
                         <div class="input-group">
-                            <label for="P">Phosphorus (P)</label>
-                            <input type="number" id="P" required placeholder="e.g. 42" min="5" max="145">
+                            <div class="input-label-row">
+                                <label for="P">Phosphorus (P)</label>
+                                <span class="input-val-badge" id="P-badge">42</span>
+                            </div>
+                            <input type="number" id="P" required placeholder="e.g. 42" min="5" max="145" value="42">
+                            <input type="range" class="range-slider" id="P-slider" min="5" max="145" value="42">
                         </div>
                         <div class="input-group">
-                            <label for="K">Potassium (K)</label>
-                            <input type="number" id="K" required placeholder="e.g. 43" min="5" max="205">
+                            <div class="input-label-row">
+                                <label for="K">Potassium (K)</label>
+                                <span class="input-val-badge" id="K-badge">43</span>
+                            </div>
+                            <input type="number" id="K" required placeholder="e.g. 43" min="5" max="205" value="43">
+                            <input type="range" class="range-slider" id="K-slider" min="5" max="205" value="43">
                         </div>
                         <div class="input-group">
-                            <label for="temperature">Temperature (°C)</label>
-                            <input type="number" step="0.1" id="temperature" required placeholder="e.g. 25.5">
+                            <div class="input-label-row">
+                                <label for="temperature">Temperature (°C)</label>
+                                <span class="input-val-badge" id="temperature-badge">25.5</span>
+                            </div>
+                            <input type="number" step="0.1" id="temperature" required placeholder="e.g. 25.5" value="25.5">
+                            <input type="range" class="range-slider" id="temperature-slider" min="0" max="50" step="0.1" value="25.5">
                         </div>
                         <div class="input-group">
-                            <label for="humidity">Humidity (%)</label>
-                            <input type="number" step="0.1" id="humidity" required placeholder="e.g. 80.0">
+                            <div class="input-label-row">
+                                <label for="humidity">Humidity (%)</label>
+                                <span class="input-val-badge" id="humidity-badge">80.0</span>
+                            </div>
+                            <input type="number" step="0.1" id="humidity" required placeholder="e.g. 80.0" value="80.0">
+                            <input type="range" class="range-slider" id="humidity-slider" min="10" max="100" step="0.1" value="80.0">
                         </div>
                         <div class="input-group">
-                            <label for="ph">pH Level</label>
-                            <input type="number" step="0.1" id="ph" required placeholder="e.g. 6.5" min="0" max="14">
+                            <div class="input-label-row">
+                                <label for="ph">pH Level</label>
+                                <span class="input-val-badge" id="ph-badge">6.5</span>
+                            </div>
+                            <input type="number" step="0.1" id="ph" required placeholder="e.g. 6.5" min="0" max="14" value="6.5">
+                            <input type="range" class="range-slider" id="ph-slider" min="0" max="14" step="0.1" value="6.5">
                         </div>
                         <div class="input-group full-width">
-                            <label for="rainfall">Rainfall (mm)</label>
-                            <input type="number" step="0.1" id="rainfall" required placeholder="e.g. 200.0">
+                            <div class="input-label-row">
+                                <label for="rainfall">Rainfall (mm)</label>
+                                <span class="input-val-badge" id="rainfall-badge">120.0</span>
+                            </div>
+                            <input type="number" step="0.1" id="rainfall" required placeholder="e.g. 200.0" value="120.0">
+                            <input type="range" class="range-slider" id="rainfall-slider" min="20" max="300" step="0.1" value="120.0">
                         </div>
                     </div>
                     <button type="submit" class="primary-btn" id="predict-btn">

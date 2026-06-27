@@ -3,45 +3,349 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | AgriClimate AI</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>AgriClimate AI | Intelligent Agricultural Analytics</title>
+    <meta name="description" content="SaaS landing page for AgriClimate AI platform. Predictive crop models, climate intelligence, and AI advisor.">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/assets/style.css">
 </head>
-<body>
-    <div class="background-animation"></div>
+<body class="landing-body">
+    <!-- Scroll Progress Bar -->
+    <div id="scroll-progress"></div>
 
+    <!-- Aurora Background Blobs -->
+    <div class="background-animation"></div>
+    <div class="aurora-blob1"></div>
+    <div class="aurora-blob2"></div>
+
+    <!-- Header -->
     <header class="glass-header">
         <div class="logo">
             <span class="icon">🌱</span>
             <h1>AgriClimate AI</h1>
         </div>
-        <nav>
-            <a href="/">Login</a>
-            <a href="/app">Dashboard</a>
+        <nav class="desktop-nav">
+            <a href="#features">Features</a>
+            <a href="#tech-stack">Technology</a>
+            <a href="#about">About</a>
+            <a href="/app" class="secondary-btn launch-btn">Dashboard</a>
+            <button id="open-login-btn" class="primary-btn signin-btn">Sign In</button>
         </nav>
+        <button id="menu-toggle" class="mobile-menu-btn">☰</button>
     </header>
 
-    <main class="auth-page">
-        <div class="auth-card glass-card">
-            <h2>Sign in to AgriClimate AI</h2>
-            <p>Use any email and password for demo access, then continue to the crop prediction dashboard.</p>
+    <!-- Mobile Drawer Navigation -->
+    <div id="mobile-drawer" class="mobile-drawer hidden">
+        <div class="drawer-header">
+            <h3>AgriClimate</h3>
+            <button id="close-drawer" class="close-btn">&times;</button>
+        </div>
+        <nav class="drawer-nav">
+            <a href="#features">Features</a>
+            <a href="#tech-stack">Technology</a>
+            <a href="#about">About</a>
+            <a href="/app" class="launch-btn-mobile">Go to Dashboard</a>
+            <button id="open-login-mobile" class="primary-btn">Sign In</button>
+        </nav>
+    </div>
 
+    <!-- Hero Section -->
+    <section class="landing-hero">
+        <div class="landing-hero-grid">
+            <div class="hero-text-content">
+                <div class="badge-new">✨ Version 2.0 Live</div>
+                <h2>Cultivate the Future with <span class="highlight" data-text="AI Precision">AI Precision</span></h2>
+                <p>Empower your farming decisions with advanced Machine Learning crop predictions, real-time climate risks monitoring, and our custom Gemini-powered virtual farm advisor.</p>
+                <div class="hero-buttons">
+                    <button id="cta-get-started" class="primary-btn pulse-glow">Get Started Free</button>
+                    <a href="#features" class="secondary-btn">Learn More</a>
+                </div>
+            </div>
+            
+            <div class="hero-visual-content">
+                <div class="visual-card-3d">
+                    <canvas id="landing-3d-canvas"></canvas>
+                    <div class="visual-overlay-glow"></div>
+                    <!-- HUD widgets -->
+                    <div class="hud-widget hud-tl">MODEL_RUNNING: RF_97.8%</div>
+                    <div class="hud-widget hud-tr">ACTIVE_NODES: 120</div>
+                    <div class="hud-widget hud-br">SYS_OK</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Showcase -->
+    <section id="features" class="landing-features">
+        <div class="section-title">
+            <span class="sub-title">CORE CAPABILITIES</span>
+            <h3>Engineered for High-Yield Performance</h3>
+            <p>We blend satellite data, soil sensors, and neural engines to optimize agricultural operations.</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card glass-card">
+                <div class="card-icon">🧪</div>
+                <h4>Soil Parameter Prediction</h4>
+                <p>Our Scikit-Learn Random Forest model analyzes Nitrogen, Phosphorus, Potassium (NPK), and pH levels to determine optimal matching crops.</p>
+            </div>
+            <div class="feature-card glass-card">
+                <div class="card-icon">🌦️</div>
+                <h4>Climatic Risk Analytics</h4>
+                <p>Live analysis of weather variations, rainfall, humidity, and temperature anomalies to flag critical agricultural alerts.</p>
+            </div>
+            <div class="feature-card glass-card">
+                <div class="card-icon">🤖</div>
+                <h4>AgriClimate AI Chatbot</h4>
+                <p>A smart Gemini-powered chatbot speaking Hinglish, Hindi, and English to answer agricultural questions instantly.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technology Stack -->
+    <section id="tech-stack" class="landing-tech">
+        <div class="section-title">
+            <span class="sub-title">POWERING ENGINE</span>
+            <h3>Enterprise-Grade Architecture</h3>
+        </div>
+
+        <div class="tech-grid">
+            <div class="tech-card">
+                <span class="tech-logo">⚡</span>
+                <h5>FastAPI</h5>
+                <p>Asynchronous API backend processing computations with zero lag.</p>
+            </div>
+            <div class="tech-card">
+                <span class="tech-logo">🧠</span>
+                <h5>Google Gemini AI</h5>
+                <p>Powers our conversational intelligence and regional language advisor agent.</p>
+            </div>
+            <div class="tech-card">
+                <span class="tech-logo">📊</span>
+                <h5>Scikit-Learn</h5>
+                <p>Drives the Random Forest classifier trained on rich soil datasets.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="glass-footer">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <h3>🌱 AgriClimate AI</h3>
+                <p>Optimizing Indian Agriculture through artificial intelligence and real-time data.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Platform</h4>
+                <a href="/app">Dashboard</a>
+                <a href="#features">Features</a>
+                <a href="#tech-stack">Tech Stack</a>
+            </div>
+            <div class="footer-links">
+                <h4>Developer</h4>
+                <a href="mailto:piyushtanya2006@gmail.com">Contact Support</a>
+                <a href="#">GitHub Codebase</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 AgriClimate AI. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Glassmorphic Login Modal -->
+    <div id="login-modal" class="login-modal-overlay hidden">
+        <div class="login-modal-card glass-card">
+            <button id="close-login-btn" class="modal-close">&times;</button>
+            <div class="modal-header">
+                <h2>Welcome Back</h2>
+                <p>Log in to access your agricultural dashboard.</p>
+            </div>
+            
             <form id="auth-form" class="auth-form">
                 <div class="form-group">
-                    <label for="auth-email">Email address</label>
-                    <input type="email" id="auth-email" placeholder="you@example.com" required>
+                    <label for="auth-email">Email Address</label>
+                    <input type="email" id="auth-email" placeholder="you@example.com" required autocomplete="email">
                 </div>
                 <div class="form-group">
                     <label for="auth-password">Password</label>
-                    <input type="password" id="auth-password" placeholder="••••••••" required>
+                    <input type="password" id="auth-password" placeholder="••••••••" required autocomplete="current-password">
                 </div>
-                <button type="submit" class="primary-btn">Log in</button>
-                <p class="auth-meta">Your login is stored locally in this browser for the demo experience.</p>
+                <button type="submit" class="primary-btn">Access Dashboard</button>
                 <div class="auth-error hidden" id="auth-error">Please fill in both email and password.</div>
             </form>
+            
+            <p class="modal-footer-note">Demo credentials: Any email & password.</p>
         </div>
-    </main>
+    </div>
 
+    <!-- Scripts -->
     <script src="/assets/login.js"></script>
+    <script>
+        // Landing Page UI Script
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginModal = document.getElementById('login-modal');
+            const openLoginBtn = document.getElementById('open-login-btn');
+            const openLoginMobile = document.getElementById('open-login-mobile');
+            const closeLoginBtn = document.getElementById('close-login-btn');
+            const ctaGetStarted = document.getElementById('cta-get-started');
+            
+            const mobileMenuBtn = document.getElementById('menu-toggle');
+            const mobileDrawer = document.getElementById('mobile-drawer');
+            const closeDrawerBtn = document.getElementById('close-drawer');
+            
+            // --- Modal Open/Close ---
+            const showModal = () => {
+                loginModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            };
+            const hideModal = () => {
+                loginModal.classList.add('hidden');
+                document.body.style.overflow = '';
+            };
+            
+            if (openLoginBtn) openLoginBtn.addEventListener('click', showModal);
+            if (openLoginMobile) openLoginMobile.addEventListener('click', () => {
+                mobileDrawer.classList.add('hidden');
+                showModal();
+            });
+            if (ctaGetStarted) ctaGetStarted.addEventListener('click', showModal);
+            if (closeLoginBtn) closeLoginBtn.addEventListener('click', hideModal);
+            
+            loginModal.addEventListener('click', (e) => {
+                if (e.target === loginModal) hideModal();
+            });
+            
+            // --- Mobile Drawer ---
+            if (mobileMenuBtn && mobileDrawer) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    mobileDrawer.classList.toggle('hidden');
+                });
+            }
+            if (closeDrawerBtn && mobileDrawer) {
+                closeDrawerBtn.addEventListener('click', () => {
+                    mobileDrawer.classList.add('hidden');
+                });
+            }
+            
+            // --- Scroll Progress ---
+            window.addEventListener('scroll', () => {
+                const scrollProgress = document.getElementById('scroll-progress');
+                if (scrollProgress) {
+                    const docH = document.documentElement.scrollHeight - window.innerHeight;
+                    const progress = (window.scrollY / docH) * 100;
+                    scrollProgress.style.width = `${Math.min(progress, 100)}%`;
+                }
+            }, { passive: true });
+            
+            // --- 3D Landing Page Canvas Animation ---
+            const canvas = document.getElementById('landing-3d-canvas');
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                let width, height;
+                let particles = [];
+                let lines = [];
+                let angle = 0;
+                
+                function resize() {
+                    const rect = canvas.parentElement.getBoundingClientRect();
+                    width = rect.width;
+                    height = rect.height;
+                    canvas.width = width;
+                    canvas.height = height;
+                    generateStructure();
+                }
+                
+                function generateStructure() {
+                    particles = [];
+                    // Generate points forming a 3D wireframe rotating globe
+                    const count = 50;
+                    for (let i = 0; i < count; i++) {
+                        const theta = Math.acos((Math.random() * 2) - 1);
+                        const phi = Math.random() * Math.PI * 2;
+                        const radius = Math.min(width, height) * 0.35;
+                        
+                        particles.push({
+                            x: radius * Math.sin(theta) * Math.cos(phi),
+                            y: radius * Math.sin(theta) * Math.sin(phi),
+                            z: radius * Math.cos(theta),
+                            origX: radius * Math.sin(theta) * Math.cos(phi),
+                            origY: radius * Math.sin(theta) * Math.sin(phi),
+                            origZ: radius * Math.cos(theta)
+                        });
+                    }
+                }
+                
+                window.addEventListener('resize', resize, { passive: true });
+                resize();
+                
+                const perspective = 300;
+                
+                function animate() {
+                    ctx.clearRect(0, 0, width, height);
+                    angle += 0.003;
+                    
+                    const cosA = Math.cos(angle);
+                    const sinA = Math.sin(angle);
+                    const centerX = width / 2;
+                    const centerY = height / 2;
+                    
+                    // Rotate points and project
+                    const projected = [];
+                    particles.forEach(p => {
+                        // Rotate around Y
+                        let x1 = p.origX * cosA - p.origZ * sinA;
+                        let z1 = p.origX * sinA + p.origZ * cosA;
+                        // Rotate around X slightly
+                        let y2 = p.origY * Math.cos(0.4) - z1 * Math.sin(0.4);
+                        let z2 = p.origY * Math.sin(0.4) + z1 * Math.cos(0.4);
+                        
+                        const scale = perspective / (perspective + z2);
+                        const px = centerX + x1 * scale;
+                        const py = centerY + y2 * scale;
+                        
+                        projected.push({ px, py, scale, z: z2 });
+                    });
+                    
+                    // Draw connections
+                    ctx.lineWidth = 0.5;
+                    for (let i = 0; i < projected.length; i++) {
+                        for (let j = i + 1; j < projected.length; j++) {
+                            const dx = projected[i].px - projected[j].px;
+                            const dy = projected[i].py - projected[j].py;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            
+                            if (dist < 100) {
+                                const opacity = (1 - dist / 100) * 0.15 * (projected[i].scale + projected[j].scale) / 2;
+                                ctx.strokeStyle = `rgba(0, 255, 136, ${opacity})`;
+                                ctx.beginPath();
+                                ctx.moveTo(projected[i].px, projected[i].py);
+                                ctx.lineTo(projected[j].px, projected[j].py);
+                                ctx.stroke();
+                            }
+                        }
+                    }
+                    
+                    // Draw points
+                    projected.forEach(p => {
+                        const size = p.scale * 2.5;
+                        const opacity = Math.max(0.1, 0.7 * (1 - p.z / 150));
+                        ctx.fillStyle = `rgba(0, 180, 255, ${opacity})`;
+                        ctx.beginPath();
+                        ctx.arc(p.px, p.py, size, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Glow core
+                        ctx.fillStyle = `rgba(0, 255, 136, ${opacity * 0.5})`;
+                        ctx.beginPath();
+                        ctx.arc(p.px, p.py, size * 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    
+                    requestAnimationFrame(animate);
+                }
+                
+                animate();
+            }
+        });
+    </script>
 </body>
 </html>
