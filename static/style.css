@@ -1789,9 +1789,10 @@ textarea:focus {
 
 /* ── Floating AI Advisor Bubble ── */
 .advisor-bubble {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
+    position: fixed !important;
+    bottom: 30px !important;
+    right: 30px !important;
+    left: auto !important;
     width: 64px;
     height: 64px;
     background: linear-gradient(135deg, var(--neon-green), var(--neon-blue));
@@ -1801,7 +1802,7 @@ textarea:focus {
     justify-content: center;
     cursor: pointer;
     box-shadow: 0 4px 24px rgba(0, 255, 136, 0.4), 0 0 0 0px rgba(0, 180, 255, 0.3);
-    z-index: 1005;
+    z-index: 1005 !important;
     transition: all 0.4s var(--ease-spring);
     animation: advisorPulse 2.5s ease-in-out infinite;
 }
@@ -1844,12 +1845,13 @@ textarea:focus {
 
 /* Floating Chat Panel */
 .advisor-panel {
-    position: fixed;
-    bottom: 105px;
-    right: 30px;
-    width: 410px;
-    height: 620px;
-    z-index: 1006;
+    position: fixed !important;
+    bottom: 105px !important;
+    right: 30px !important;
+    left: auto !important;
+    width: 410px !important;
+    height: 620px !important;
+    z-index: 1006 !important;
     display: flex;
     flex-direction: column;
     overflow: hidden;
