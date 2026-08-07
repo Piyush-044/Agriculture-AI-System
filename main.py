@@ -27,10 +27,17 @@ except ImportError:
 
 try:
     from jose import JWTError, jwt
-    from passlib.context import CryptContext
     JWT_AVAILABLE = True
 except ImportError:
     JWT_AVAILABLE = False
+
+try:
+    from passlib.context import CryptContext
+    _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    BCRYPT_AVAILABLE = True
+except Exception:
+    _pwd_context = None
+    BCRYPT_AVAILABLE = False
 
 try:
     from reportlab.lib.pagesizes import A4
@@ -67,8 +74,6 @@ SECRET_KEY = os.getenv("JWT_SECRET_KEY", "agriClimate-secret-2024-change-in-prod
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
-if JWT_AVAILABLE:
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
 # ─────────────────────────────────────────────
@@ -892,13 +897,33 @@ def get_government_schemes(state: Optional[str] = None, crop: Optional[str] = No
 # Auth Helper Functions
 # -----------------------------------------------
 def hash_password(password: str) -> str:
-    if JWT_AVAILABLE:
-        return pwd_context.hash(password)
-    return hashlib.sha256(password.encode()).hexdigest()
+    """Hash password — bcrypt if available, else sha256."""
+    if BCRYPT_AVAILABLE and _pwd_context:
+        try:
+            return _pwd_context.hash(password)
+        except Exception:
+            pass
+    # Reliable fallback: sha256 with salt
+    salt = os.urandom(16).hex()
+    h = hashlib.sha256((salt + password).encode()).hexdigest()
+    return f"sha256:{salt}:{h}"
 
 def verify_password(plain: str, hashed: str) -> bool:
-    if JWT_AVAILABLE:
-        return pwd_context.verify(plain, hashed)
+    """Verify password — supports bcrypt and sha256 formats."""
+    if hashed.startswith("sha256:"):
+        # Our sha256 format: sha256:salt:hash
+        try:
+            _, salt, expected = hashed.split(":")
+            return hashlib.sha256((salt + plain).encode()).hexdigest() == expected
+        except Exception:
+            return False
+    # Try bcrypt
+    if BCRYPT_AVAILABLE and _pwd_context:
+        try:
+            return _pwd_context.verify(plain, hashed)
+        except Exception:
+            pass
+    # Fallback: plain sha256 (old format)
     return hashlib.sha256(plain.encode()).hexdigest() == hashed
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
