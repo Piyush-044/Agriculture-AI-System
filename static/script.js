@@ -2058,3 +2058,436 @@ function saveToHistory(crop, payload, state = null) {
     if (history.length > 50) history.shift();
     localStorage.setItem('agriclimate_history', JSON.stringify(history));
 }
+
+// =====================================================================
+// NEW FEATURES — Voice Input, Weather, GPS, Profit Calc, PDF, History
+// =====================================================================
+
+// ─── Auth & User State ───────────────────────────────────────────────
+(function initUser() {
+    const raw = localStorage.getItem('agri_user') || localStorage.getItem('agriclimate_user');
+    if (!raw) return;
+    try {
+        const u = JSON.parse(raw);
+        if (u && u.name) {
+            // Show welcome banner
+            const banner = document.createElement('div');
+            banner.id = 'user-welcome-banner';
+            banner.style.cssText = `position:fixed;top:70px;right:16px;z-index:9999;
+                background:linear-gradient(135deg,rgba(15,74,46,0.95),rgba(10,35,22,0.98));
+                border:1px solid rgba(74,222,128,0.25);border-radius:12px;padding:10px 16px;
+                font-family:Outfit,sans-serif;font-size:13px;color:#a7f3d0;
+                backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,0.4);
+                display:flex;align-items:center;gap:8px;animation:slideInRight 0.4s ease;`;
+            banner.innerHTML = `<span style="font-size:18px">👨‍🌾</span>
+                <div><strong style="color:#4ade80">${u.name}</strong>
+                <span style="display:block;font-size:11px;opacity:.7">${u.email || 'Guest Mode'}</span></div>
+                <button onclick="this.parentElement.remove()" style="background:none;border:none;color:#6ee7b7;cursor:pointer;font-size:16px;margin-left:4px">×</button>`;
+            document.body.appendChild(banner);
+            setTimeout(() => banner && banner.remove(), 4000);
+        }
+    } catch(e) {}
+})();
+
+// ─── Voice Input (Web Speech API) ────────────────────────────────────
+(function initVoiceInput() {
+    const voiceBtn = document.getElementById('voice-btn');
+    if (!voiceBtn) return;
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+        voiceBtn.title = 'Voice not supported in this browser';
+        voiceBtn.style.opacity = '0.4';
+        return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'hi-IN'; // Hindi first
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    let listening = false;
+
+    recognition.onstart = () => {
+        listening = true;
+        voiceBtn.textContent = '🔴';
+        voiceBtn.title = 'Bol raha hoon... (listening)';
+        voiceBtn.style.animation = 'pulse 0.8s infinite';
+    };
+
+    recognition.onresult = (e) => {
+        const transcript = e.results[0][0].transcript;
+        const input = document.getElementById('advisor-input');
+        if (input) {
+            input.value = transcript;
+            input.dispatchEvent(new Event('input'));
+            // Auto-submit after voice
+            setTimeout(() => {
+                const form = document.getElementById('advisor-form');
+                if (form) form.dispatchEvent(new Event('submit', { bubbles: true }));
+            }, 500);
+        }
+    };
+
+    recognition.onend = () => {
+        listening = false;
+        voiceBtn.textContent = '🎤';
+        voiceBtn.title = 'Voice input';
+        voiceBtn.style.animation = '';
+    };
+
+    recognition.onerror = (e) => {
+        listening = false;
+        voiceBtn.textContent = '🎤';
+        voiceBtn.style.animation = '';
+        if (e.error !== 'aborted') {
+            showToast('🎤 Voice error: ' + e.error, 'warning');
+        }
+    };
+
+    voiceBtn.addEventListener('click', () => {
+        if (listening) {
+            recognition.stop();
+        } else {
+            // Try Hindi first, fallback to en-IN
+            recognition.lang = 'hi-IN';
+            recognition.start();
+        }
+    });
+})();
+
+// ─── Weather Widget ───────────────────────────────────────────────────
+async function loadWeatherWidget(state) {
+    if (!state) return;
+    const existingWidget = document.getElementById('weather-widget');
+    if (existingWidget) existingWidget.remove();
+
+    try {
+        const res = await fetch(`/api/weather?state=${encodeURIComponent(state)}`);
+        const w = await res.json();
+
+        const widget = document.createElement('div');
+        widget.id = 'weather-widget';
+        widget.style.cssText = `
+            background: linear-gradient(135deg, rgba(6,20,40,0.92), rgba(0,60,30,0.85));
+            border: 1px solid rgba(74,222,128,0.2); border-radius: 14px;
+            padding: 14px 18px; margin: 12px 0; display: flex;
+            align-items: center; justify-content: space-between; gap: 16px;
+            backdrop-filter: blur(12px); animation: fadeInUp 0.4s ease;
+            flex-wrap: wrap;`;
+
+        const iconMap = {'01d':'☀️','02d':'⛅','03d':'☁️','04d':'☁️','09d':'🌧️','10d':'🌦️','11d':'⛈️','13d':'❄️','50d':'🌫️'};
+        const icon = iconMap[w.icon] || '🌤️';
+        const isLive = w.source && w.source.includes('Live');
+
+        widget.innerHTML = `
+            <div style="display:flex;align-items:center;gap:12px">
+                <span style="font-size:32px">${icon}</span>
+                <div>
+                    <div style="font-size:20px;font-weight:700;color:#f0fdf4">${w.temperature}°C</div>
+                    <div style="font-size:12px;color:#6ee7b7">${w.description}</div>
+                    <div style="font-size:11px;color:#4ade80;font-weight:600">${w.city || state}</div>
+                </div>
+            </div>
+            <div style="display:flex;gap:16px;font-size:12px;color:#a7f3d0">
+                <div><div style="font-weight:600;color:#4ade80">${w.humidity}%</div><div>Humidity</div></div>
+                <div><div style="font-weight:600;color:#4ade80">${w.wind_speed} m/s</div><div>Wind</div></div>
+                <div><div style="font-weight:600;color:#4ade80">${w.feels_like}°C</div><div>Feels Like</div></div>
+            </div>
+            <div style="font-size:10px;color:${isLive?'#34d399':'#6b7280'};text-align:right">
+                ${isLive ? '🟢 Live' : '⚪ Simulated'}<br>
+                <a href="https://openweathermap.org/api" target="_blank" style="color:#4ade80;font-size:10px;text-decoration:none">${isLive ? 'OpenWeatherMap' : 'Add API key'}</a>
+            </div>`;
+
+        // Inject before state analysis section or result box
+        const resultBox = document.getElementById('result-box');
+        if (resultBox && !resultBox.classList.contains('hidden')) {
+            resultBox.insertAdjacentElement('beforebegin', widget);
+        } else {
+            const stateGrid = document.getElementById('state-data-panel') || document.querySelector('.explore-section');
+            if (stateGrid) stateGrid.insertAdjacentElement('afterbegin', widget);
+        }
+    } catch(e) { /* Weather load failed silently */ }
+}
+
+// Hook into state selection if it exists
+const origLoadStateData = window.loadStateData;
+if (typeof origLoadStateData === 'function') {
+    window.loadStateData = function(state) {
+        origLoadStateData(state);
+        loadWeatherWidget(state);
+    };
+}
+
+// Also auto-load on state card click
+document.addEventListener('click', (e) => {
+    const card = e.target.closest('[data-state]');
+    if (card && card.dataset.state) loadWeatherWidget(card.dataset.state);
+});
+
+// ─── GPS State Auto-Detect in Main App ───────────────────────────────
+(function initGPSDetect() {
+    // Add GPS detect button near state dropdown if it exists
+    const stateDropdowns = document.querySelectorAll('#state-select, #state-selector, select[id*="state"]');
+    stateDropdowns.forEach(sel => {
+        const gpsBtn = document.createElement('button');
+        gpsBtn.type = 'button';
+        gpsBtn.id = 'gps-detect-btn';
+        gpsBtn.style.cssText = `display:inline-flex;align-items:center;gap:6px;padding:6px 12px;
+            background:rgba(22,163,74,0.1);border:1.5px dashed rgba(22,163,74,0.4);border-radius:8px;
+            color:#4ade80;font-family:Outfit,sans-serif;font-size:12px;font-weight:600;
+            cursor:pointer;transition:all 0.25s;margin-top:6px;width:100%;justify-content:center;`;
+        gpsBtn.innerHTML = '📍 GPS se state auto-detect karo';
+        gpsBtn.addEventListener('mouseenter', () => { gpsBtn.style.background = 'rgba(22,163,74,0.2)'; });
+        gpsBtn.addEventListener('mouseleave', () => { gpsBtn.style.background = 'rgba(22,163,74,0.1)'; });
+        gpsBtn.addEventListener('click', async () => {
+            gpsBtn.innerHTML = '⏳ Detecting...';
+            gpsBtn.disabled = true;
+            try {
+                const pos = await new Promise((r,j) => navigator.geolocation.getCurrentPosition(r,j,{timeout:8000}));
+                const res = await fetch(`/api/location-to-state?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
+                const d = await res.json();
+                if (d.state && d.state !== 'Unknown') {
+                    for (let i = 0; i < sel.options.length; i++) {
+                        if (sel.options[i].text.toLowerCase().includes(d.state.toLowerCase().split(' ')[0])) {
+                            sel.selectedIndex = i;
+                            sel.dispatchEvent(new Event('change'));
+                            break;
+                        }
+                    }
+                    showToast(`📍 State detected: ${d.state}`, 'success');
+                    loadWeatherWidget(d.state);
+                } else showToast('State detect nahi hua — manually choose karo', 'warning');
+            } catch(e) { showToast('Location permission denied', 'warning'); }
+            gpsBtn.innerHTML = '📍 GPS se state auto-detect karo';
+            gpsBtn.disabled = false;
+        });
+        sel.parentNode.insertBefore(gpsBtn, sel.nextSibling);
+    });
+})();
+
+// ─── Profit / Loss Calculator Panel ──────────────────────────────────
+(function initProfitCalculator() {
+    // Find section to inject into (after yield card or schemes)
+    const target = document.getElementById('schemes-section') || document.getElementById('market-section');
+    if (!target) return;
+
+    const section = document.createElement('section');
+    section.id = 'profit-section';
+    section.style.cssText = 'padding: 40px 20px; max-width: 900px; margin: 0 auto;';
+    section.innerHTML = `
+    <div style="text-align:center;margin-bottom:28px">
+        <span style="font-size:11px;letter-spacing:2px;color:#4ade80;font-weight:600;text-transform:uppercase">Financial Planning</span>
+        <h2 style="font-size:clamp(24px,3vw,36px);font-weight:800;color:#f0fdf4;margin-top:8px">
+            💹 Profit &amp; Loss <span style="background:linear-gradient(90deg,#4ade80,#fcd34d);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Calculator</span>
+        </h2>
+        <p style="color:#6ee7b7;font-size:15px;margin-top:8px">Input costs daalo — net profit, ROI aur break-even price instantly pata karo</p>
+    </div>
+    <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:28px;backdrop-filter:blur(12px)">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px">
+            ${[
+                ['💊 Crop Name','profit-crop','text','e.g. Rice'],
+                ['🌾 Area (hectares)','profit-area','number','e.g. 2.5'],
+                ['🌱 Seed Cost (₹/ha)','profit-seed','number','e.g. 3000'],
+                ['🧪 Fertilizer Cost (₹/ha)','profit-fert','number','e.g. 5000'],
+                ['💧 Irrigation Cost (₹/ha)','profit-irr','number','e.g. 2000'],
+                ['👷 Labor Cost (₹/ha)','profit-labor','number','e.g. 8000'],
+            ].map(([lbl,id,type,ph]) => `
+                <div>
+                    <label style="font-size:12px;font-weight:600;color:#6ee7b7;display:block;margin-bottom:6px">${lbl}</label>
+                    <input type="${type}" id="${id}" placeholder="${ph}" style="width:100%;background:rgba(255,255,255,0.06);border:1.5px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px 14px;color:#f0fdf4;font-family:Outfit,sans-serif;font-size:14px;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='#22c55e'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'">
+                </div>`).join('')}
+        </div>
+        <button id="calc-profit-btn" onclick="calculateProfit()" style="width:100%;padding:14px;background:linear-gradient(135deg,#16a34a,#22c55e);border:none;border-radius:12px;color:white;font-family:Outfit,sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:all 0.3s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+            💹 Calculate Profit / Loss
+        </button>
+        <div id="profit-result" style="display:none;margin-top:20px;padding:20px;background:rgba(22,163,74,0.08);border:1px solid rgba(22,163,74,0.2);border-radius:14px"></div>
+    </div>`;
+
+    target.insertAdjacentElement('beforebegin', section);
+})();
+
+window.calculateProfit = async function() {
+    const crop = document.getElementById('profit-crop')?.value?.trim();
+    const area = parseFloat(document.getElementById('profit-area')?.value);
+    const seed = parseFloat(document.getElementById('profit-seed')?.value) || 0;
+    const fert = parseFloat(document.getElementById('profit-fert')?.value) || 0;
+    const irr  = parseFloat(document.getElementById('profit-irr')?.value) || 0;
+    const labor= parseFloat(document.getElementById('profit-labor')?.value) || 0;
+
+    if (!crop || !area) { showToast('Crop name aur area daalo!', 'warning'); return; }
+
+    const btn = document.getElementById('calc-profit-btn');
+    btn.innerHTML = '⏳ Calculating...'; btn.disabled = true;
+
+    try {
+        const res = await fetch('/api/profit-calculator', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ crop, area_hectares: area, seed_cost: seed, fertilizer_cost: fert, irrigation_cost: irr, labor_cost: labor })
+        });
+        const d = await res.json();
+        const isProfit = d.net_profit_inr >= 0;
+        const resultEl = document.getElementById('profit-result');
+        resultEl.style.display = 'block';
+        resultEl.innerHTML = `
+            <div style="text-align:center;margin-bottom:16px">
+                <div style="font-size:32px">${isProfit ? '✅' : '⚠️'}</div>
+                <div style="font-size:24px;font-weight:800;color:${isProfit?'#34d399':'#f87171'}">${d.verdict}</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+                ${[
+                    ['Total Cost', '₹' + d.total_input_cost_inr.toLocaleString('en-IN'), '#fcd34d'],
+                    ['Expected Yield', d.expected_yield_tons + ' tons', '#60a5fa'],
+                    ['Gross Revenue', '₹' + d.gross_revenue_inr.toLocaleString('en-IN'), '#a78bfa'],
+                    ['Net Profit', '₹' + d.net_profit_inr.toLocaleString('en-IN'), isProfit?'#34d399':'#f87171'],
+                    ['ROI', d.roi_percent + '%', isProfit?'#4ade80':'#f87171'],
+                    ['Break-even Price', '₹' + d.break_even_price_per_ton + '/ton', '#6ee7b7'],
+                ].map(([k,v,c]) => `
+                    <div style="text-align:center;padding:12px;background:rgba(255,255,255,0.04);border-radius:10px;border:1px solid rgba(255,255,255,0.08)">
+                        <div style="font-size:18px;font-weight:700;color:${c}">${v}</div>
+                        <div style="font-size:11px;color:#6ee7b7;margin-top:4px">${k}</div>
+                    </div>`).join('')}
+            </div>
+            <div style="margin-top:14px;padding:12px;background:rgba(22,163,74,0.08);border-radius:10px;font-size:13px;color:#a7f3d0">
+                💡 <strong>Tip:</strong> ${d.tip}
+            </div>`;
+    } catch(e) { showToast('Calculation failed — please retry', 'warning'); }
+    btn.innerHTML = '💹 Calculate Profit / Loss'; btn.disabled = false;
+};
+
+// ─── PDF Report Download ──────────────────────────────────────────────
+window.downloadPDFReport = async function() {
+    const user = JSON.parse(localStorage.getItem('agri_user') || '{}');
+    const crop = document.getElementById('predicted-crop')?.textContent || '';
+    const state = document.querySelector('[data-state].selected')?.dataset?.state || '';
+
+    const payload = {
+        farmer_name: user.name || 'Farmer',
+        state: state,
+        crop: crop,
+        N: parseFloat(document.getElementById('N')?.value) || null,
+        P: parseFloat(document.getElementById('P')?.value) || null,
+        K: parseFloat(document.getElementById('K')?.value) || null,
+        temperature: parseFloat(document.getElementById('temperature')?.value) || null,
+        humidity: parseFloat(document.getElementById('humidity')?.value) || null,
+        ph: parseFloat(document.getElementById('ph')?.value) || null,
+        rainfall: parseFloat(document.getElementById('rainfall')?.value) || null,
+        yield_estimate: parseFloat(document.getElementById('yield-value')?.textContent) || null,
+    };
+
+    showToast('📋 PDF generate ho raha hai...', 'info');
+
+    try {
+        const res = await fetch('/api/report/download', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+        if (!res.ok) { const e = await res.json(); showToast('PDF Error: ' + e.detail, 'warning'); return; }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `AgriReport_${crop}_${new Date().toISOString().slice(0,10)}.pdf`;
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+        showToast('✅ PDF download ho gaya!', 'success');
+    } catch(e) { showToast('PDF download failed', 'warning'); }
+};
+
+// Wire up existing "Download Soil Card" button to new PDF endpoint
+document.addEventListener('DOMContentLoaded', () => {
+    const dlBtn = document.getElementById('download-report-btn');
+    if (dlBtn) {
+        dlBtn.textContent = '📋 Download PDF Report';
+        dlBtn.onclick = (e) => { e.preventDefault(); downloadPDFReport(); };
+    }
+});
+
+// ─── Price Trend Panel ────────────────────────────────────────────────
+window.showPriceTrend = async function(crop) {
+    if (!crop) return;
+    let panel = document.getElementById('price-trend-panel');
+    if (!panel) {
+        panel = document.createElement('div');
+        panel.id = 'price-trend-panel';
+        panel.style.cssText = 'position:fixed;bottom:20px;left:20px;z-index:9000;width:340px;max-height:400px;overflow:auto;background:rgba(6,11,20,0.97);border:1px solid rgba(74,222,128,0.2);border-radius:16px;padding:20px;backdrop-filter:blur(20px);box-shadow:0 20px 60px rgba(0,0,0,0.5);animation:slideInLeft 0.3s ease';
+        document.body.appendChild(panel);
+    }
+    panel.innerHTML = '<div style="color:#6ee7b7;font-size:13px;text-align:center;padding:20px">⏳ Loading trend...</div>';
+    try {
+        const res = await fetch(`/api/price-trend/${encodeURIComponent(crop)}`);
+        const d = await res.json();
+        const isRising = d.slope_per_day > 0;
+        panel.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                <div><div style="font-size:15px;font-weight:700;color:#f0fdf4">📈 ${d.crop} Price Trend</div>
+                <div style="font-size:11px;color:#6ee7b7">30-day history + 7-day forecast</div></div>
+                <button onclick="this.closest('#price-trend-panel').remove()" style="background:none;border:none;color:#6ee7b7;cursor:pointer;font-size:18px">×</button>
+            </div>
+            <div style="display:flex;gap:12px;margin-bottom:14px">
+                <div style="flex:1;text-align:center;padding:10px;background:rgba(22,163,74,0.1);border-radius:10px">
+                    <div style="font-size:18px;font-weight:700;color:#4ade80">₹${d.current_modal.toLocaleString('en-IN')}</div>
+                    <div style="font-size:11px;color:#6ee7b7">Current Modal</div>
+                </div>
+                <div style="flex:1;text-align:center;padding:10px;background:rgba(22,163,74,0.1);border-radius:10px">
+                    <div style="font-size:18px;font-weight:700;color:${d.signal.includes('BUY')?'#34d399':d.signal.includes('SELL')?'#f87171':'#fbbf24'}">${d.signal}</div>
+                    <div style="font-size:11px;color:#6ee7b7">AI Signal</div>
+                </div>
+            </div>
+            <div style="font-size:11px;color:#6ee7b7;margin-bottom:8px">
+                Trend: <strong style="color:#4ade80">${d.trend.toUpperCase()}</strong> · 
+                Slope: <strong style="color:${isRising?'#34d399':'#f87171'}">${isRising?'+':''}${d.slope_per_day} ₹/day</strong>
+            </div>
+            <div style="max-height:180px;overflow-y:auto">
+            ${[...d.history.slice(-7), ...d.forecast].map(h => `
+                <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:12px">
+                    <span style="color:${h.forecast?'#fcd34d':'#a7f3d0'}">${h.date}${h.forecast?' 🔮':''}</span>
+                    <span style="font-weight:600;color:${h.forecast?'#fcd34d':'#f0fdf4'}">₹${h.price.toLocaleString('en-IN')}</span>
+                </div>`).join('')}
+            </div>`;
+    } catch(e) { panel.innerHTML = '<div style="color:#f87171;text-align:center;padding:20px">Failed to load trend data</div>'; }
+};
+
+// Hook price trend to market price cards if they exist
+document.addEventListener('click', (e) => {
+    const card = e.target.closest('.market-card, .price-card');
+    if (card) {
+        const crop = card.dataset.crop || card.querySelector('h4, .crop-name')?.textContent?.trim();
+        if (crop) showPriceTrend(crop);
+    }
+});
+
+// ─── Toast Notification Helper ────────────────────────────────────────
+window.showToast = function(msg, type = 'info') {
+    const existing = document.getElementById('agri-toast');
+    if (existing) existing.remove();
+
+    const colors = { success: '#34d399', warning: '#fbbf24', error: '#f87171', info: '#60a5fa' };
+    const icons  = { success: '✅', warning: '⚠️', error: '❌', info: 'ℹ️' };
+
+    const toast = document.createElement('div');
+    toast.id = 'agri-toast';
+    toast.style.cssText = `position:fixed;bottom:24px;right:24px;z-index:99999;
+        background:rgba(6,20,40,0.97);border:1px solid ${colors[type]};border-radius:12px;
+        padding:12px 18px;font-family:Outfit,sans-serif;font-size:14px;color:#f0fdf4;
+        backdrop-filter:blur(16px);box-shadow:0 8px 32px rgba(0,0,0,0.4);
+        display:flex;align-items:center;gap:10px;max-width:340px;
+        animation:slideInRight 0.35s ease;`;
+    toast.innerHTML = `<span style="font-size:18px">${icons[type]}</span><span>${msg}</span>`;
+    document.body.appendChild(toast);
+
+    setTimeout(() => { if (toast.parentNode) { toast.style.animation='fadeOut 0.3s ease'; setTimeout(()=>toast.remove(),300); } }, 3500);
+};
+
+// ─── CSS Animations inject ────────────────────────────────────────────
+const style = document.createElement('style');
+style.textContent = `
+@keyframes slideInRight { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:translateX(0)} }
+@keyframes slideInLeft  { from{opacity:0;transform:translateX(-40px)} to{opacity:1;transform:translateX(0)} }
+@keyframes fadeInUp     { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeOut      { from{opacity:1} to{opacity:0;transform:translateY(10px)} }
+@keyframes pulse        { 0%,100%{transform:scale(1)} 50%{transform:scale(1.2)} }
+#gps-detect-btn { margin-top:8px !important; }
+`;
+document.head.appendChild(style);
