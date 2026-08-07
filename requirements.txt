@@ -6,3 +6,7 @@ numpy
 google-generativeai
 python-dotenv
 httpx
+python-jose[cryptography]
+passlib[bcrypt]
+reportlab
+aiohttp

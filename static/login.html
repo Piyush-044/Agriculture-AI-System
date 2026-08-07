@@ -3,349 +3,319 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgriClimate AI | Intelligent Agricultural Analytics</title>
-    <meta name="description" content="SaaS landing page for AgriClimate AI platform. Predictive crop models, climate intelligence, and AI advisor.">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/assets/style.css">
+    <title>AgriClimate AI | Sign In</title>
+    <meta name="description" content="Login to AgriClimate AI - AI-powered crop prediction for Indian farmers.">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --g9: #0a2316; --g8: #0d3320; --g7: #0f4a2e;
+            --g5: #16a34a; --g4: #22c55e; --g3: #4ade80;
+            --gold: #f59e0b; --goldl: #fcd34d;
+            --tp: #f0fdf4; --ts: #a7f3d0; --tm: #6ee7b7;
+            --gb: rgba(255,255,255,0.05); --gbr: rgba(255,255,255,0.1);
+            --ib: rgba(255,255,255,0.07); --err: #f87171; --ok: #34d399;
+        }
+        body { font-family: Outfit, sans-serif; background: var(--g9); min-height: 100vh; overflow: hidden; display: flex; }
+        #bgc { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+        .au { position: fixed; border-radius: 50%; filter: blur(80px); opacity: .12; animation: ad 18s ease-in-out infinite; pointer-events: none; z-index: 0; }
+        .a1 { width: 600px; height: 600px; background: radial-gradient(circle,#16a34a,transparent); top: -200px; left: -200px; }
+        .a2 { width: 500px; height: 500px; background: radial-gradient(circle,#0d9488,transparent); bottom: -150px; right: -100px; animation-delay: 4s; }
+        .a3 { width: 400px; height: 400px; background: radial-gradient(circle,#f59e0b,transparent); top: 50%; left: 40%; animation-delay: 8s; }
+        @keyframes ad { 0%,100%{transform:translate(0,0)scale(1)} 33%{transform:translate(40px,-30px)scale(1.1)} 66%{transform:translate(-20px,40px)scale(0.95)} }
+        .pw { position: relative; z-index: 1; display: flex; width: 100%; min-height: 100vh; }
+        .lp { flex: 1.2; display: flex; flex-direction: column; justify-content: center; padding: 60px; position: relative;
+            background: linear-gradient(135deg,rgba(15,74,46,.6),rgba(10,35,22,.8)); border-right: 1px solid var(--gbr); backdrop-filter: blur(10px); overflow: hidden; }
+        .lp::before { content: ''; position: absolute; inset: 0; opacity: .4;
+            background-image: radial-gradient(circle at 1px 1px, rgba(74,222,128,0.08) 1px, transparent 0);
+            background-size: 32px 32px; z-index: 0; }
+        .lc { position: relative; z-index: 1; }
+        .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 48px; }
+        .bico { width: 52px; height: 52px; background: linear-gradient(135deg,var(--g5),var(--g3)); border-radius: 14px;
+            display: flex; align-items: center; justify-content: center; font-size: 26px; box-shadow: 0 8px 32px rgba(22,163,74,.4); }
+        .brand h1 { font-size: 22px; font-weight: 700; color: var(--tp); line-height: 1.1; }
+        .brand h1 span { font-size: 12px; color: var(--tm); font-weight: 400; display: block; }
+        .tag { font-size: clamp(30px,3.5vw,52px); font-weight: 800; color: var(--tp); line-height: 1.1; margin-bottom: 20px; letter-spacing: -1px; }
+        .tag .hl { background: linear-gradient(90deg,var(--g3),var(--goldl)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .sub { font-size: 15px; color: var(--ts); line-height: 1.7; margin-bottom: 40px; max-width: 420px; }
+        .stats { display: flex; gap: 20px; margin-bottom: 44px; }
+        .sc { flex: 1; background: var(--gb); border: 1px solid var(--gbr); border-radius: 14px; padding: 16px; text-align: center; position: relative; overflow: hidden; }
+        .sc::before { content: ''; position: absolute; top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--g5),var(--g3)); }
+        .sn { font-size: 26px; font-weight: 800; color: var(--g3); display: block; }
+        .sl { font-size: 11px; color: var(--tm); font-weight: 500; text-transform: uppercase; letter-spacing: .5px; }
+        .pills { display: flex; flex-wrap: wrap; gap: 10px; }
+        .pill { background: var(--gb); border: 1px solid var(--gbr); border-radius: 50px; padding: 7px 14px; font-size: 13px; color: var(--ts); display: flex; align-items: center; gap: 6px; transition: all .25s; cursor: default; }
+        .pill:hover { background: rgba(22,163,74,.15); border-color: var(--g5); color: var(--g3); transform: translateY(-2px); }
+        .fc { position: absolute; background: rgba(15,74,46,.88); border: 1px solid rgba(74,222,128,.2); border-radius: 12px; padding: 10px 14px;
+            backdrop-filter: blur(8px); font-size: 12px; color: var(--ts); animation: fcf 6s ease-in-out infinite; }
+        .fc b { font-weight: 700; color: var(--g3); display: block; margin-bottom: 2px; }
+        .fc1{bottom:180px;right:40px} .fc2{bottom:80px;right:160px;animation-delay:2s} .fc3{top:120px;right:50px;animation-delay:4s}
+        @keyframes fcf { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+        .rp { flex: .85; display: flex; align-items: center; justify-content: center; padding: 40px; background: rgba(10,35,22,.97); backdrop-filter: blur(20px); }
+        .card { width: 100%; max-width: 420px; }
+        .ah { text-align: center; margin-bottom: 28px; }
+        .ah h2 { font-size: 28px; font-weight: 700; color: var(--tp); margin-bottom: 8px; }
+        .ah p { font-size: 14px; color: var(--tm); }
+        .tabs { display: flex; background: var(--gb); border: 1px solid var(--gbr); border-radius: 12px; padding: 4px; margin-bottom: 28px; }
+        .tb { flex: 1; padding: 10px; border: none; background: transparent; color: var(--tm); font-family: Outfit,sans-serif; font-size: 14px; font-weight: 600; border-radius: 9px; cursor: pointer; transition: all .3s; }
+        .tb.on { background: linear-gradient(135deg,var(--g7),var(--g5)); color: white; box-shadow: 0 4px 15px rgba(22,163,74,.4); }
+        .fp { display: none; animation: fi .35s ease; }
+        .fp.show { display: block; }
+        @keyframes fi { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+        .fg { margin-bottom: 16px; }
+        .fg label { display: block; font-size: 13px; font-weight: 600; color: var(--ts); margin-bottom: 6px; }
+        .fw { position: relative; }
+        .fic { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; pointer-events: none; z-index: 2; }
+        .fg input, .fg select { width: 100%; background: var(--ib); border: 1.5px solid var(--gbr); border-radius: 10px;
+            padding: 12px 14px 12px 42px; font-family: Outfit,sans-serif; font-size: 14px; color: var(--tp); outline: none; transition: all .25s; appearance: none; }
+        .fg select option { background: var(--g8); color: white; }
+        .fg input::placeholder { color: rgba(167,243,208,.4); }
+        .fg input:focus, .fg select:focus { border-color: var(--g5); background: rgba(22,163,74,.08); box-shadow: 0 0 0 3px rgba(22,163,74,.15); }
+        .ferr { font-size: 12px; color: var(--err); margin-top: 4px; display: none; }
+        .eye { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--tm); cursor: pointer; font-size: 16px; }
+        .gpsbtn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px;
+            background: rgba(15,168,75,.08); border: 1.5px dashed rgba(22,163,74,.4); border-radius: 10px;
+            color: var(--g3); font-family: Outfit,sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .25s; margin-bottom: 16px; }
+        .gpsbtn:hover { background: rgba(22,163,74,.12); border-color: var(--g4); transform: translateY(-1px); }
+        .sbtn { width: 100%; padding: 14px; background: linear-gradient(135deg,var(--g5),var(--g4)); border: none; border-radius: 12px;
+            color: white; font-family: Outfit,sans-serif; font-size: 16px; font-weight: 700; cursor: pointer; transition: all .3s;
+            position: relative; overflow: hidden; margin-bottom: 16px; }
+        .sbtn::before { content:''; position:absolute;top:0;left:-100%;width:100%;height:100%;
+            background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);transition:left .5s; }
+        .sbtn:hover::before { left: 100%; }
+        .sbtn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(22,163,74,.5); }
+        .sbtn.ld { opacity:.7; pointer-events:none; }
+        .dv { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; color: var(--tm); font-size: 12px; }
+        .dv::before,.dv::after { content:''; flex:1; height:1px; background:var(--gbr); }
+        .gbtn { width: 100%; padding: 12px; background: transparent; border: 1.5px solid var(--gbr); border-radius: 12px;
+            color: var(--ts); font-family: Outfit,sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: all .25s; }
+        .gbtn:hover { background: var(--gb); border-color: rgba(255,255,255,.2); color: var(--tp); }
+        .msg { text-align: center; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-bottom: 12px; display: none; }
+        .msg.err { background: rgba(248,113,113,.15); color: var(--err); border: 1px solid rgba(248,113,113,.3); display: block; }
+        .msg.ok { background: rgba(52,211,153,.15); color: var(--ok); border: 1px solid rgba(52,211,153,.3); display: block; }
+        .pws { height: 3px; border-radius: 2px; margin-top: 5px; background: var(--gbr); overflow: hidden; }
+        .pwsb { height:100%; border-radius:2px; transition:all .3s; width:0; }
+        .foot { text-align: center; font-size: 12px; color: var(--tm); margin-top: 16px; }
+        .foot a { color: var(--g3); text-decoration: none; }
+        .sp { display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle; }
+        @keyframes spin { to{transform:rotate(360deg)} }
+        @media(max-width:900px){ body{overflow:auto}.pw{flex-direction:column}.lp{flex:none;padding:40px 30px}.rp{flex:none;padding:30px 20px}.fc1,.fc2,.fc3{display:none}.stats{gap:12px}.tag{font-size:28px} }
+    </style>
 </head>
-<body class="landing-body">
-    <!-- Scroll Progress Bar -->
-    <div id="scroll-progress"></div>
-
-    <!-- Aurora Background Blobs -->
-    <div class="background-animation"></div>
-    <div class="aurora-blob1"></div>
-    <div class="aurora-blob2"></div>
-
-    <!-- Header -->
-    <header class="glass-header">
-        <div class="logo">
-            <span class="icon">🌱</span>
-            <h1>AgriClimate AI</h1>
-        </div>
-        <nav class="desktop-nav">
-            <a href="#features">Features</a>
-            <a href="#tech-stack">Technology</a>
-            <a href="#about">About</a>
-            <a href="/app" class="secondary-btn launch-btn">Dashboard</a>
-            <button id="open-login-btn" class="primary-btn signin-btn">Sign In</button>
-        </nav>
-        <button id="menu-toggle" class="mobile-menu-btn">☰</button>
-    </header>
-
-    <!-- Mobile Drawer Navigation -->
-    <div id="mobile-drawer" class="mobile-drawer hidden">
-        <div class="drawer-header">
-            <h3>AgriClimate</h3>
-            <button id="close-drawer" class="close-btn">&times;</button>
-        </div>
-        <nav class="drawer-nav">
-            <a href="#features">Features</a>
-            <a href="#tech-stack">Technology</a>
-            <a href="#about">About</a>
-            <a href="/app" class="launch-btn-mobile">Go to Dashboard</a>
-            <button id="open-login-mobile" class="primary-btn">Sign In</button>
-        </nav>
+<body>
+<canvas id="bgc"></canvas>
+<div class="au a1"></div><div class="au a2"></div><div class="au a3"></div>
+<div class="pw">
+  <!-- LEFT PANEL -->
+  <div class="lp">
+    <div class="lc">
+      <div class="brand">
+        <div class="bico">🌱</div>
+        <h1>AgriClimate AI <span>India ka Smart Farm Advisor</span></h1>
+      </div>
+      <h2 class="tag">Kheti ka <span class="hl">AI Brain</span><br>ab tumhare saath hai</h2>
+      <p class="sub">Fasal ka sahi faisla karo — AI-powered crop prediction, disease detection, live market prices, irrigation scheduling, aur zyada — bilkul free.</p>
+      <div class="stats">
+        <div class="sc"><span class="sn" id="sf">0</span><span class="sl">Farmers</span></div>
+        <div class="sc"><span class="sn" id="sp">0</span><span class="sl">Predictions</span></div>
+        <div class="sc"><span class="sn">97.8%</span><span class="sl">Accuracy</span></div>
+      </div>
+      <div class="pills">
+        <div class="pill">🌾 Crop Prediction</div><div class="pill">🦠 Disease AI</div>
+        <div class="pill">💰 Market Prices</div><div class="pill">💧 Irrigation</div>
+        <div class="pill">📊 Yield Estimate</div><div class="pill">📋 PDF Report</div>
+        <div class="pill">🌦️ Live Weather</div><div class="pill">📖 Farm Diary</div>
+        <div class="pill">🎙️ Voice Input</div><div class="pill">💹 Profit Calculator</div>
+      </div>
     </div>
+    <div class="fc fc1"><b>🌾 Rice — Punjab</b>Yield: 4.2 t/ha · ✅ Optimal</div>
+    <div class="fc fc2"><b>🌤️ Mausam Alert</b>Rajasthan · 42°C · Extreme Heat</div>
+    <div class="fc fc3"><b>💰 Wheat ₹2,340/q</b>Trend: Rising 📈 · BUY signal</div>
+  </div>
 
-    <!-- Hero Section -->
-    <section class="landing-hero">
-        <div class="landing-hero-grid">
-            <div class="hero-text-content">
-                <div class="badge-new">✨ Version 2.0 Live</div>
-                <h2>Cultivate the Future with <span class="highlight" data-text="AI Precision">AI Precision</span></h2>
-                <p>Empower your farming decisions with advanced Machine Learning crop predictions, real-time climate risks monitoring, and our custom Gemini-powered virtual farm advisor.</p>
-                <div class="hero-buttons">
-                    <button id="cta-get-started" class="primary-btn pulse-glow">Get Started Free</button>
-                    <a href="#features" class="secondary-btn">Learn More</a>
-                </div>
-            </div>
-            
-            <div class="hero-visual-content">
-                <div class="visual-card-3d">
-                    <canvas id="landing-3d-canvas"></canvas>
-                    <div class="visual-overlay-glow"></div>
-                    <!-- HUD widgets -->
-                    <div class="hud-widget hud-tl">MODEL_RUNNING: RF_97.8%</div>
-                    <div class="hud-widget hud-tr">ACTIVE_NODES: 120</div>
-                    <div class="hud-widget hud-br">SYS_OK</div>
-                </div>
-            </div>
-        </div>
-    </section>
+  <!-- RIGHT AUTH PANEL -->
+  <div class="rp">
+    <div class="card">
+      <div class="ah"><h2>👋 Swagat Hai!</h2><p>Apna account banao ya login karo</p></div>
+      <div class="tabs">
+        <button class="tb on" id="tl" onclick="sw('login')">🔑 Login</button>
+        <button class="tb" id="tr" onclick="sw('reg')">✨ Register</button>
+      </div>
+      <div id="smsg" class="msg"></div>
 
-    <!-- Features Showcase -->
-    <section id="features" class="landing-features">
-        <div class="section-title">
-            <span class="sub-title">CORE CAPABILITIES</span>
-            <h3>Engineered for High-Yield Performance</h3>
-            <p>We blend satellite data, soil sensors, and neural engines to optimize agricultural operations.</p>
+      <!-- LOGIN FORM -->
+      <div class="fp show" id="pl">
+        <div class="fg">
+          <label>Email Address</label>
+          <div class="fw"><span class="fic">📧</span>
+            <input type="email" id="le" placeholder="aapka@email.com" autocomplete="email">
+          </div><div class="ferr" id="lee">Valid email daalo</div>
         </div>
+        <div class="fg">
+          <label>Password</label>
+          <div class="fw"><span class="fic">🔒</span>
+            <input type="password" id="lp" placeholder="••••••••">
+            <button class="eye" onclick="tpw('lp',this)" type="button">👁️</button>
+          </div><div class="ferr" id="lpe">Password daalo</div>
+        </div>
+        <button class="sbtn" id="lbtn" onclick="doLogin()">Login karo 🌱</button>
+        <div class="dv">ya phir</div>
+        <button class="gbtn" onclick="guest()">👤 Guest ke taur pe continue karo</button>
+      </div>
 
-        <div class="features-grid">
-            <div class="feature-card glass-card">
-                <div class="card-icon">🧪</div>
-                <h4>Soil Parameter Prediction</h4>
-                <p>Our Scikit-Learn Random Forest model analyzes Nitrogen, Phosphorus, Potassium (NPK), and pH levels to determine optimal matching crops.</p>
-            </div>
-            <div class="feature-card glass-card">
-                <div class="card-icon">🌦️</div>
-                <h4>Climatic Risk Analytics</h4>
-                <p>Live analysis of weather variations, rainfall, humidity, and temperature anomalies to flag critical agricultural alerts.</p>
-            </div>
-            <div class="feature-card glass-card">
-                <div class="card-icon">🤖</div>
-                <h4>AgriClimate AI Chatbot</h4>
-                <p>A smart Gemini-powered chatbot speaking Hinglish, Hindi, and English to answer agricultural questions instantly.</p>
-            </div>
+      <!-- REGISTER FORM -->
+      <div class="fp" id="pr">
+        <div class="fg">
+          <label>Aapka Naam</label>
+          <div class="fw"><span class="fic">👨‍🌾</span>
+            <input type="text" id="rn" placeholder="Jaise: Ramesh Kumar">
+          </div><div class="ferr" id="rne">Naam daalo</div>
         </div>
-    </section>
-
-    <!-- Technology Stack -->
-    <section id="tech-stack" class="landing-tech">
-        <div class="section-title">
-            <span class="sub-title">POWERING ENGINE</span>
-            <h3>Enterprise-Grade Architecture</h3>
+        <div class="fg">
+          <label>Email Address</label>
+          <div class="fw"><span class="fic">📧</span>
+            <input type="email" id="re" placeholder="aapka@email.com">
+          </div><div class="ferr" id="ree">Valid email daalo</div>
         </div>
-
-        <div class="tech-grid">
-            <div class="tech-card">
-                <span class="tech-logo">⚡</span>
-                <h5>FastAPI</h5>
-                <p>Asynchronous API backend processing computations with zero lag.</p>
-            </div>
-            <div class="tech-card">
-                <span class="tech-logo">🧠</span>
-                <h5>Google Gemini AI</h5>
-                <p>Powers our conversational intelligence and regional language advisor agent.</p>
-            </div>
-            <div class="tech-card">
-                <span class="tech-logo">📊</span>
-                <h5>Scikit-Learn</h5>
-                <p>Drives the Random Forest classifier trained on rich soil datasets.</p>
-            </div>
+        <div class="fg">
+          <label>State (Optional)</label>
+          <button class="gpsbtn" id="gpsbtn" onclick="gpsDetect()">📍 GPS se auto-detect karo</button>
+          <div class="fw"><span class="fic">🗺️</span>
+            <select id="rst">
+              <option value="">-- State select karo --</option>
+              <option>Andhra Pradesh</option><option>Arunachal Pradesh</option><option>Assam</option>
+              <option>Bihar</option><option>Chhattisgarh</option><option>Delhi</option><option>Goa</option>
+              <option>Gujarat</option><option>Haryana</option><option>Himachal Pradesh</option>
+              <option>Jammu &amp; Kashmir</option><option>Jharkhand</option><option>Karnataka</option>
+              <option>Kerala</option><option>Madhya Pradesh</option><option>Maharashtra</option>
+              <option>Manipur</option><option>Meghalaya</option><option>Mizoram</option>
+              <option>Nagaland</option><option>Odisha</option><option>Punjab</option>
+              <option>Rajasthan</option><option>Sikkim</option><option>Tamil Nadu</option>
+              <option>Telangana</option><option>Tripura</option><option>Uttar Pradesh</option>
+              <option>Uttarakhand</option><option>West Bengal</option>
+            </select>
+          </div>
         </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="glass-footer">
-        <div class="footer-grid">
-            <div class="footer-brand">
-                <h3>🌱 AgriClimate AI</h3>
-                <p>Optimizing Indian Agriculture through artificial intelligence and real-time data.</p>
-            </div>
-            <div class="footer-links">
-                <h4>Platform</h4>
-                <a href="/app">Dashboard</a>
-                <a href="#features">Features</a>
-                <a href="#tech-stack">Tech Stack</a>
-            </div>
-            <div class="footer-links">
-                <h4>Developer</h4>
-                <a href="mailto:piyushtanya2006@gmail.com">Contact Support</a>
-                <a href="#">GitHub Codebase</a>
-            </div>
+        <div class="fg">
+          <label>Password</label>
+          <div class="fw"><span class="fic">🔒</span>
+            <input type="password" id="rp" placeholder="Min 6 characters" oninput="pwStr(this.value)">
+            <button class="eye" onclick="tpw('rp',this)" type="button">👁️</button>
+          </div>
+          <div class="pws"><div class="pwsb" id="pwbar"></div></div>
+          <div class="ferr" id="rpe">6+ characters chahiye</div>
         </div>
-        <div class="footer-bottom">
-            <p>&copy; 2026 AgriClimate AI. All Rights Reserved.</p>
-        </div>
-    </footer>
-
-    <!-- Glassmorphic Login Modal -->
-    <div id="login-modal" class="login-modal-overlay hidden">
-        <div class="login-modal-card glass-card">
-            <button id="close-login-btn" class="modal-close">&times;</button>
-            <div class="modal-header">
-                <h2>Welcome Back</h2>
-                <p>Log in to access your agricultural dashboard.</p>
-            </div>
-            
-            <form id="auth-form" class="auth-form">
-                <div class="form-group">
-                    <label for="auth-email">Email Address</label>
-                    <input type="email" id="auth-email" placeholder="you@example.com" required autocomplete="email">
-                </div>
-                <div class="form-group">
-                    <label for="auth-password">Password</label>
-                    <input type="password" id="auth-password" placeholder="••••••••" required autocomplete="current-password">
-                </div>
-                <button type="submit" class="primary-btn">Access Dashboard</button>
-                <div class="auth-error hidden" id="auth-error">Please fill in both email and password.</div>
-            </form>
-            
-            <p class="modal-footer-note">Demo credentials: Any email & password.</p>
-        </div>
+        <button class="sbtn" id="rbtn" onclick="doReg()">Account banao 🚀</button>
+        <div class="dv">ya phir</div>
+        <button class="gbtn" onclick="guest()">👤 Guest ke taur pe continue karo</button>
+      </div>
+      <div class="foot">By continuing you agree to our <a href="#">Terms</a> &amp; <a href="#">Privacy</a></div>
     </div>
+  </div>
+</div>
 
-    <!-- Scripts -->
-    <script src="/assets/login.js"></script>
-    <script>
-        // Landing Page UI Script
-        document.addEventListener('DOMContentLoaded', () => {
-            const loginModal = document.getElementById('login-modal');
-            const openLoginBtn = document.getElementById('open-login-btn');
-            const openLoginMobile = document.getElementById('open-login-mobile');
-            const closeLoginBtn = document.getElementById('close-login-btn');
-            const ctaGetStarted = document.getElementById('cta-get-started');
-            
-            const mobileMenuBtn = document.getElementById('menu-toggle');
-            const mobileDrawer = document.getElementById('mobile-drawer');
-            const closeDrawerBtn = document.getElementById('close-drawer');
-            
-            // --- Modal Open/Close ---
-            const showModal = () => {
-                loginModal.classList.remove('hidden');
-                document.body.style.overflow = 'hidden';
-            };
-            const hideModal = () => {
-                loginModal.classList.add('hidden');
-                document.body.style.overflow = '';
-            };
-            
-            if (openLoginBtn) openLoginBtn.addEventListener('click', showModal);
-            if (openLoginMobile) openLoginMobile.addEventListener('click', () => {
-                mobileDrawer.classList.add('hidden');
-                showModal();
-            });
-            if (ctaGetStarted) ctaGetStarted.addEventListener('click', showModal);
-            if (closeLoginBtn) closeLoginBtn.addEventListener('click', hideModal);
-            
-            loginModal.addEventListener('click', (e) => {
-                if (e.target === loginModal) hideModal();
-            });
-            
-            // --- Mobile Drawer ---
-            if (mobileMenuBtn && mobileDrawer) {
-                mobileMenuBtn.addEventListener('click', () => {
-                    mobileDrawer.classList.toggle('hidden');
-                });
-            }
-            if (closeDrawerBtn && mobileDrawer) {
-                closeDrawerBtn.addEventListener('click', () => {
-                    mobileDrawer.classList.add('hidden');
-                });
-            }
-            
-            // --- Scroll Progress ---
-            window.addEventListener('scroll', () => {
-                const scrollProgress = document.getElementById('scroll-progress');
-                if (scrollProgress) {
-                    const docH = document.documentElement.scrollHeight - window.innerHeight;
-                    const progress = (window.scrollY / docH) * 100;
-                    scrollProgress.style.width = `${Math.min(progress, 100)}%`;
-                }
-            }, { passive: true });
-            
-            // --- 3D Landing Page Canvas Animation ---
-            const canvas = document.getElementById('landing-3d-canvas');
-            if (canvas) {
-                const ctx = canvas.getContext('2d');
-                let width, height;
-                let particles = [];
-                let lines = [];
-                let angle = 0;
-                
-                function resize() {
-                    const rect = canvas.parentElement.getBoundingClientRect();
-                    width = rect.width;
-                    height = rect.height;
-                    canvas.width = width;
-                    canvas.height = height;
-                    generateStructure();
-                }
-                
-                function generateStructure() {
-                    particles = [];
-                    // Generate points forming a 3D wireframe rotating globe
-                    const count = 50;
-                    for (let i = 0; i < count; i++) {
-                        const theta = Math.acos((Math.random() * 2) - 1);
-                        const phi = Math.random() * Math.PI * 2;
-                        const radius = Math.min(width, height) * 0.35;
-                        
-                        particles.push({
-                            x: radius * Math.sin(theta) * Math.cos(phi),
-                            y: radius * Math.sin(theta) * Math.sin(phi),
-                            z: radius * Math.cos(theta),
-                            origX: radius * Math.sin(theta) * Math.cos(phi),
-                            origY: radius * Math.sin(theta) * Math.sin(phi),
-                            origZ: radius * Math.cos(theta)
-                        });
-                    }
-                }
-                
-                window.addEventListener('resize', resize, { passive: true });
-                resize();
-                
-                const perspective = 300;
-                
-                function animate() {
-                    ctx.clearRect(0, 0, width, height);
-                    angle += 0.003;
-                    
-                    const cosA = Math.cos(angle);
-                    const sinA = Math.sin(angle);
-                    const centerX = width / 2;
-                    const centerY = height / 2;
-                    
-                    // Rotate points and project
-                    const projected = [];
-                    particles.forEach(p => {
-                        // Rotate around Y
-                        let x1 = p.origX * cosA - p.origZ * sinA;
-                        let z1 = p.origX * sinA + p.origZ * cosA;
-                        // Rotate around X slightly
-                        let y2 = p.origY * Math.cos(0.4) - z1 * Math.sin(0.4);
-                        let z2 = p.origY * Math.sin(0.4) + z1 * Math.cos(0.4);
-                        
-                        const scale = perspective / (perspective + z2);
-                        const px = centerX + x1 * scale;
-                        const py = centerY + y2 * scale;
-                        
-                        projected.push({ px, py, scale, z: z2 });
-                    });
-                    
-                    // Draw connections
-                    ctx.lineWidth = 0.5;
-                    for (let i = 0; i < projected.length; i++) {
-                        for (let j = i + 1; j < projected.length; j++) {
-                            const dx = projected[i].px - projected[j].px;
-                            const dy = projected[i].py - projected[j].py;
-                            const dist = Math.sqrt(dx * dx + dy * dy);
-                            
-                            if (dist < 100) {
-                                const opacity = (1 - dist / 100) * 0.15 * (projected[i].scale + projected[j].scale) / 2;
-                                ctx.strokeStyle = `rgba(0, 255, 136, ${opacity})`;
-                                ctx.beginPath();
-                                ctx.moveTo(projected[i].px, projected[i].py);
-                                ctx.lineTo(projected[j].px, projected[j].py);
-                                ctx.stroke();
-                            }
-                        }
-                    }
-                    
-                    // Draw points
-                    projected.forEach(p => {
-                        const size = p.scale * 2.5;
-                        const opacity = Math.max(0.1, 0.7 * (1 - p.z / 150));
-                        ctx.fillStyle = `rgba(0, 180, 255, ${opacity})`;
-                        ctx.beginPath();
-                        ctx.arc(p.px, p.py, size, 0, Math.PI * 2);
-                        ctx.fill();
-                        
-                        // Glow core
-                        ctx.fillStyle = `rgba(0, 255, 136, ${opacity * 0.5})`;
-                        ctx.beginPath();
-                        ctx.arc(p.px, p.py, size * 2, 0, Math.PI * 2);
-                        ctx.fill();
-                    });
-                    
-                    requestAnimationFrame(animate);
-                }
-                
-                animate();
-            }
-        });
-    </script>
+<script>
+// Particle canvas
+const cv = document.getElementById('bgc'), cx = cv.getContext('2d');
+const em = ['🌾','🌱','🌿','🍀','🌻','🌽','🥕','🍅','💧','☀️','🌤️','🌶️'];
+let pts = [];
+function rsz(){ cv.width = innerWidth; cv.height = innerHeight; }
+rsz(); window.addEventListener('resize', rsz);
+function mkP(){
+  return { x: Math.random()*cv.width, y: cv.height+30,
+    e: em[Math.floor(Math.random()*em.length)], sz: 14+Math.random()*14,
+    sp: 0.3+Math.random()*0.6, dr: (Math.random()-.5)*.5,
+    op: 0.05+Math.random()*.1, ro: Math.random()*Math.PI*2, rs: (Math.random()-.5)*.015 };
+}
+for(let i=0;i<35;i++){ let p=mkP(); p.y=Math.random()*cv.height; pts.push(p); }
+(function anim(){
+  cx.clearRect(0,0,cv.width,cv.height);
+  pts.forEach(p=>{
+    p.y-=p.sp; p.x+=p.dr; p.ro+=p.rs;
+    if(p.y<-40){ Object.assign(p,mkP()); }
+    cx.save(); cx.globalAlpha=p.op; cx.translate(p.x,p.y); cx.rotate(p.ro);
+    cx.font=p.sz+'px serif'; cx.textAlign='center'; cx.textBaseline='middle';
+    cx.fillText(p.e,0,0); cx.restore();
+  }); requestAnimationFrame(anim);
+})();
+
+// Counters
+function cnt(id, to, s=''){
+  let c=0, step=to/60, el=document.getElementById(id);
+  let iv=setInterval(()=>{ c=Math.min(c+step,to); el.textContent=Math.floor(c).toLocaleString('en-IN')+s; if(c>=to)clearInterval(iv); },25);
+}
+setTimeout(()=>{ cnt('sf',12847,'+'); cnt('sp',98432,'+'); },400);
+
+function sw(t){
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.fp').forEach(p=>p.classList.remove('show'));
+  document.getElementById('t'+t[0]).classList.add('on');
+  document.getElementById('p'+t[0]).classList.add('show'); clrM();
+}
+function tpw(id,btn){ const i=document.getElementById(id); i.type=i.type==='password'?'text':'password'; btn.textContent=i.type==='password'?'👁️':'🙈'; }
+function pwStr(v){ const bar=document.getElementById('pwbar');
+  let s=0; if(v.length>=6)s++; if(v.length>=10)s++; if(/[A-Z]/.test(v))s++; if(/[0-9]/.test(v))s++; if(/[^A-Za-z0-9]/.test(v))s++;
+  bar.style.width=['20%','40%','60%','80%','100%'][s-1]||'0';
+  bar.style.background=['#f87171','#fb923c','#fbbf24','#34d399','#22c55e'][s-1]||'#374151'; }
+function showM(m,t){ const e=document.getElementById('smsg'); e.textContent=m; e.className='msg '+t; }
+function clrM(){ const e=document.getElementById('smsg'); e.className='msg'; e.textContent=''; }
+function ldBtn(id,on,def){ const b=document.getElementById(id); b.innerHTML=on?'<span class="sp"></span>Please wait...':def; b.classList.toggle('ld',on); }
+
+async function gpsDetect(){
+  const btn=document.getElementById('gpsbtn'); btn.style.opacity='.6'; btn.innerHTML='<span class="sp"></span>Detecting...';
+  try{
+    const pos=await new Promise((r,j)=>navigator.geolocation.getCurrentPosition(r,j,{timeout:8000}));
+    const res=await fetch('/api/location-to-state?lat='+pos.coords.latitude+'&lon='+pos.coords.longitude);
+    const d=await res.json();
+    if(d.state&&d.state!=='Unknown'){
+      const sel=document.getElementById('rst');
+      for(let i=0;i<sel.options.length;i++){ if(sel.options[i].text.toLowerCase().includes(d.state.toLowerCase())){sel.selectedIndex=i;break;} }
+      showM('📍 Detected: '+d.state,'ok');
+    } else showM('State detect nahi hua — manually choose karo','err');
+  }catch(e){ showM('Location access denied ya error aaya','err'); }
+  btn.style.opacity='1'; btn.innerHTML='📍 GPS se auto-detect karo';
+}
+
+async function doReg(){
+  clrM();
+  const n=document.getElementById('rn').value.trim(), e=document.getElementById('re').value.trim();
+  const pw=document.getElementById('rp').value, st=document.getElementById('rst').value;
+  let ok=true;
+  document.getElementById('rne').style.display=n?'none':'block'; if(!n)ok=false;
+  document.getElementById('ree').style.display=(e&&e.includes('@'))?'none':'block'; if(!e||!e.includes('@'))ok=false;
+  document.getElementById('rpe').style.display=pw.length>=6?'none':'block'; if(pw.length<6)ok=false;
+  if(!ok)return;
+  ldBtn('rbtn',true);
+  try{
+    const res=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,email:e,password:pw,state:st})});
+    const d=await res.json();
+    if(res.ok){ localStorage.setItem('agri_token',d.access_token); localStorage.setItem('agri_user',JSON.stringify({name:d.name,email:d.email}));
+      showM('✅ Welcome '+d.name+'! Redirecting...','ok'); setTimeout(()=>location.href='/app',1200);
+    } else showM(d.detail||'Registration failed','err');
+  }catch(x){ showM('Server error — thodi der baad try karo','err'); }
+  ldBtn('rbtn',false,'Account banao 🚀');
+}
+
+async function doLogin(){
+  clrM();
+  const e=document.getElementById('le').value.trim(), pw=document.getElementById('lp').value;
+  let ok=true;
+  document.getElementById('lee').style.display=(e&&e.includes('@'))?'none':'block'; if(!e||!e.includes('@'))ok=false;
+  document.getElementById('lpe').style.display=pw?'none':'block'; if(!pw)ok=false;
+  if(!ok)return;
+  ldBtn('lbtn',true);
+  try{
+    const res=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e,password:pw})});
+    const d=await res.json();
+    if(res.ok){ localStorage.setItem('agri_token',d.access_token); localStorage.setItem('agri_user',JSON.stringify({name:d.name,email:d.email,state:d.state}));
+      showM('✅ Welcome back, '+d.name+'! 🌾','ok'); setTimeout(()=>location.href='/app',1000);
+    } else showM(d.detail||'Login failed','err');
+  }catch(x){ showM('Server se connect nahi ho pa raha','err'); }
+  ldBtn('lbtn',false,'Login karo 🌱');
+}
+
+function guest(){ localStorage.removeItem('agri_token'); localStorage.setItem('agri_user',JSON.stringify({name:'Guest',email:''})); location.href='/app'; }
+document.addEventListener('keydown',e=>{ if(e.key==='Enter'){ document.querySelector('.fp.show').id==='pl'?doLogin():doReg(); } });
+</script>
 </body>
 </html>

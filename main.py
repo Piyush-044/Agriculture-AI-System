@@ -1,5 +1,6 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi.responses import FileResponse, StreamingResponse, Response
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from contextlib import asynccontextmanager
 # pyrefly: ignore[missing-import]
 from pydantic import BaseModel
@@ -12,13 +13,41 @@ import base64
 import json
 import random
 import asyncio
+import sqlite3
+import hashlib
+import io
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import google.generativeai as genai
+
 try:
     import httpx
 except ImportError:
     httpx = None
+
+try:
+    from jose import JWTError, jwt
+    from passlib.context import CryptContext
+    JWT_AVAILABLE = True
+except ImportError:
+    JWT_AVAILABLE = False
+
+try:
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+    from reportlab.lib.units import inch
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT
+    REPORTLAB_AVAILABLE = True
+except ImportError:
+    REPORTLAB_AVAILABLE = False
+
+try:
+    import aiohttp
+    AIOHTTP_AVAILABLE = True
+except ImportError:
+    AIOHTTP_AVAILABLE = False
 
 # Load env variables
 load_dotenv()
@@ -27,6 +56,67 @@ load_dotenv()
 gemini_key = os.getenv("GEMINI_API_KEY")
 if gemini_key:
     genai.configure(api_key=gemini_key)
+
+# Weather API Key (OpenWeatherMap - free at openweathermap.org)
+WEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY", "")
+
+# ─────────────────────────────────────────────
+# JWT / Auth Configuration
+# ─────────────────────────────────────────────
+SECRET_KEY = os.getenv("JWT_SECRET_KEY", "agriClimate-secret-2024-change-in-production")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
+
+if JWT_AVAILABLE:
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
+
+# ─────────────────────────────────────────────
+# SQLite Database Setup
+# ─────────────────────────────────────────────
+DB_PATH = "agri_database.db"
+
+def get_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    conn = get_db()
+    cur = conn.cursor()
+    cur.executescript("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            hashed_password TEXT NOT NULL,
+            state TEXT DEFAULT '',
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS chat_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_email TEXT NOT NULL,
+            session_id TEXT NOT NULL,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            crop TEXT DEFAULT '',
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS farm_diary (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_email TEXT NOT NULL,
+            title TEXT NOT NULL,
+            date TEXT NOT NULL,
+            activity TEXT NOT NULL,
+            crop TEXT DEFAULT '',
+            notes TEXT DEFAULT '',
+            created_at TEXT DEFAULT (datetime('now'))
+        );
+    """)
+    conn.commit()
+    conn.close()
+
+init_db()
 
 # ─────────────────────────────────────────────
 # Keep-alive: ping self every 10 min so Render
@@ -794,12 +884,525 @@ def get_government_schemes(state: Optional[str] = None, crop: Optional[str] = No
             filtered.append(scheme)
     return {"schemes": filtered, "total": len(filtered), "state": state, "crop": crop}
 
+# ═══════════════════════════════════════════════
+# NEW FEATURES BLOCK — Phase 7+
+# ═══════════════════════════════════════════════
+
+# -----------------------------------------------
+# Auth Helper Functions
+# -----------------------------------------------
+def hash_password(password: str) -> str:
+    if JWT_AVAILABLE:
+        return pwd_context.hash(password)
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def verify_password(plain: str, hashed: str) -> bool:
+    if JWT_AVAILABLE:
+        return pwd_context.verify(plain, hashed)
+    return hashlib.sha256(plain.encode()).hexdigest() == hashed
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    to_encode.update({"exp": expire})
+    if JWT_AVAILABLE:
+        return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    # Fallback: base64 encode (not secure, just for compatibility)
+    import base64 as b64
+    return b64.b64encode(json.dumps(to_encode).encode()).decode()
+
+def get_current_user_email(token: str = Depends(oauth2_scheme)) -> Optional[str]:
+    if not token:
+        return None
+    try:
+        if JWT_AVAILABLE:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            return payload.get("sub")
+        import base64 as b64
+        payload = json.loads(b64.b64decode(token.encode()).decode())
+        return payload.get("sub")
+    except Exception:
+        return None
+
+# -----------------------------------------------
+# Phase 7: JWT Authentication Endpoints
+# -----------------------------------------------
+class RegisterRequest(BaseModel):
+    name: str
+    email: str
+    password: str
+    state: Optional[str] = ""
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+@app.post("/api/auth/register")
+def register_user(data: RegisterRequest):
+    conn = get_db()
+    cur = conn.cursor()
+    existing = cur.execute("SELECT id FROM users WHERE email=?", (data.email,)).fetchone()
+    if existing:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Email already registered")
+    hashed = hash_password(data.password)
+    cur.execute(
+        "INSERT INTO users (name, email, hashed_password, state) VALUES (?,?,?,?)",
+        (data.name, data.email, hashed, data.state)
+    )
+    conn.commit()
+    conn.close()
+    token = create_access_token({"sub": data.email, "name": data.name})
+    return {"access_token": token, "token_type": "bearer", "name": data.name, "email": data.email}
+
+@app.post("/api/auth/login")
+def login_user(data: LoginRequest):
+    conn = get_db()
+    cur = conn.cursor()
+    user = cur.execute("SELECT * FROM users WHERE email=?", (data.email,)).fetchone()
+    conn.close()
+    if not user or not verify_password(data.password, user["hashed_password"]):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    token = create_access_token({"sub": user["email"], "name": user["name"]})
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "name": user["name"],
+        "email": user["email"],
+        "state": user["state"]
+    }
+
+@app.get("/api/auth/me")
+def get_me(token: str = Depends(oauth2_scheme)):
+    email = get_current_user_email(token)
+    if not email:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    conn = get_db()
+    user = conn.execute("SELECT id, name, email, state, created_at FROM users WHERE email=?", (email,)).fetchone()
+    conn.close()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return dict(user)
+
+# -----------------------------------------------
+# Phase 8: Live Weather API
+# -----------------------------------------------
+WEATHER_CITY_MAP = {
+    "Punjab": "Ludhiana", "Haryana": "Rohtak", "Uttar Pradesh": "Lucknow",
+    "Bihar": "Patna", "West Bengal": "Kolkata", "Assam": "Guwahati",
+    "Odisha": "Bhubaneswar", "Andhra Pradesh": "Vijayawada", "Telangana": "Hyderabad",
+    "Karnataka": "Bengaluru", "Tamil Nadu": "Chennai", "Kerala": "Thiruvananthapuram",
+    "Maharashtra": "Mumbai", "Gujarat": "Ahmedabad", "Rajasthan": "Jaipur",
+    "Madhya Pradesh": "Bhopal", "Chhattisgarh": "Raipur", "Jharkhand": "Ranchi",
+    "Himachal Pradesh": "Shimla", "Jammu & Kashmir": "Jammu", "Uttarakhand": "Dehradun",
+    "Goa": "Panaji", "Delhi": "New Delhi"
+}
+
+@app.get("/api/weather")
+async def get_weather(lat: Optional[float] = None, lon: Optional[float] = None, state: Optional[str] = None):
+    """Get live weather. Uses OpenWeatherMap if API key set, else simulated."""
+    city = None
+    if state:
+        city = WEATHER_CITY_MAP.get(state, "New Delhi")
+
+    if WEATHER_API_KEY and (lat or city):
+        try:
+            if lat and lon:
+                url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={WEATHER_API_KEY}&units=metric"
+            else:
+                url = f"https://api.openweathermap.org/data/2.5/weather?q={city},IN&appid={WEATHER_API_KEY}&units=metric"
+            if httpx:
+                async with httpx.AsyncClient(timeout=8) as client:
+                    resp = await client.get(url)
+                    if resp.status_code == 200:
+                        d = resp.json()
+                        return {
+                            "city": d["name"],
+                            "temperature": round(d["main"]["temp"], 1),
+                            "feels_like": round(d["main"]["feels_like"], 1),
+                            "humidity": d["main"]["humidity"],
+                            "description": d["weather"][0]["description"].title(),
+                            "icon": d["weather"][0]["icon"],
+                            "wind_speed": d["wind"]["speed"],
+                            "pressure": d["main"]["pressure"],
+                            "source": "OpenWeatherMap Live"
+                        }
+        except Exception:
+            pass
+
+    # Simulated fallback
+    temp_base = {"Rajasthan": 38, "Kerala": 28, "Himachal Pradesh": 16, "Delhi": 32}.get(state or "", 29)
+    hum_base  = {"Kerala": 85, "Goa": 82, "Rajasthan": 30, "Delhi": 55}.get(state or "", 65)
+    descs = ["Partly Cloudy", "Clear Sky", "Overcast", "Light Rain", "Sunny"]
+    return {
+        "city": city or (state + " Region") if state else "India",
+        "temperature": round(temp_base + random.uniform(-2, 2), 1),
+        "feels_like": round(temp_base + random.uniform(-3, 3), 1),
+        "humidity": int(hum_base + random.uniform(-5, 5)),
+        "description": random.choice(descs),
+        "icon": "02d",
+        "wind_speed": round(random.uniform(2, 15), 1),
+        "pressure": int(random.uniform(1005, 1020)),
+        "source": "Simulated (Add OPENWEATHER_API_KEY for live data)"
+    }
+
+# -----------------------------------------------
+# Phase 9: GPS → State (Reverse Geocoding, free)
+# -----------------------------------------------
+@app.get("/api/location-to-state")
+async def location_to_state(lat: float, lon: float):
+    """Uses OpenStreetMap Nominatim (free, no key needed) to find Indian state from GPS."""
+    try:
+        url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}"
+        headers = {"User-Agent": "AgriClimateAI/2.0"}
+        if httpx:
+            async with httpx.AsyncClient(timeout=8, headers=headers) as client:
+                resp = await client.get(url)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    addr = data.get("address", {})
+                    state = addr.get("state", "")
+                    district = addr.get("county", addr.get("city_district", ""))
+                    return {"state": state, "district": district, "lat": lat, "lon": lon}
+    except Exception as e:
+        pass
+    return {"state": "Unknown", "district": "", "lat": lat, "lon": lon, "error": "Could not reverse geocode"}
+
+# -----------------------------------------------
+# Phase 10: Farm Diary CRUD
+# -----------------------------------------------
+class DiaryEntry(BaseModel):
+    title: str
+    date: str
+    activity: str
+    crop: Optional[str] = ""
+    notes: Optional[str] = ""
+
+@app.post("/api/diary/add")
+def add_diary_entry(data: DiaryEntry, token: str = Depends(oauth2_scheme)):
+    email = get_current_user_email(token) or "guest"
+    conn = get_db()
+    conn.execute(
+        "INSERT INTO farm_diary (user_email, title, date, activity, crop, notes) VALUES (?,?,?,?,?,?)",
+        (email, data.title, data.date, data.activity, data.crop, data.notes)
+    )
+    conn.commit()
+    conn.close()
+    return {"success": True, "message": "Diary entry saved!"}
+
+@app.get("/api/diary/list")
+def list_diary_entries(token: str = Depends(oauth2_scheme)):
+    email = get_current_user_email(token) or "guest"
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT * FROM farm_diary WHERE user_email=? ORDER BY date DESC LIMIT 50",
+        (email,)
+    ).fetchall()
+    conn.close()
+    return {"entries": [dict(r) for r in rows]}
+
+@app.delete("/api/diary/{entry_id}")
+def delete_diary_entry(entry_id: int, token: str = Depends(oauth2_scheme)):
+    email = get_current_user_email(token) or "guest"
+    conn = get_db()
+    conn.execute("DELETE FROM farm_diary WHERE id=? AND user_email=?", (entry_id, email))
+    conn.commit()
+    conn.close()
+    return {"success": True}
+
+# -----------------------------------------------
+# Phase 11: Chat History Save / Load
+# -----------------------------------------------
+class SaveChatRequest(BaseModel):
+    session_id: str
+    messages: List[ChatMessage]
+    crop: Optional[str] = ""
+
+@app.post("/api/history/save")
+def save_chat_history(data: SaveChatRequest, token: str = Depends(oauth2_scheme)):
+    email = get_current_user_email(token) or "guest"
+    conn = get_db()
+    # Remove old messages for this session
+    conn.execute("DELETE FROM chat_history WHERE user_email=? AND session_id=?", (email, data.session_id))
+    for msg in data.messages:
+        conn.execute(
+            "INSERT INTO chat_history (user_email, session_id, role, content, crop) VALUES (?,?,?,?,?)",
+            (email, data.session_id, msg.role, msg.content, data.crop)
+        )
+    conn.commit()
+    conn.close()
+    return {"success": True, "saved": len(data.messages)}
+
+@app.get("/api/history/list")
+def list_chat_sessions(token: str = Depends(oauth2_scheme)):
+    email = get_current_user_email(token) or "guest"
+    conn = get_db()
+    rows = conn.execute("""
+        SELECT session_id, crop, MAX(created_at) as last_msg,
+               COUNT(*) as msg_count
+        FROM chat_history WHERE user_email=?
+        GROUP BY session_id ORDER BY last_msg DESC LIMIT 20
+    """, (email,)).fetchall()
+    conn.close()
+    return {"sessions": [dict(r) for r in rows]}
+
+@app.get("/api/history/{session_id}")
+def get_chat_session(session_id: str, token: str = Depends(oauth2_scheme)):
+    email = get_current_user_email(token) or "guest"
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT role, content FROM chat_history WHERE user_email=? AND session_id=? ORDER BY id",
+        (email, session_id)
+    ).fetchall()
+    conn.close()
+    return {"messages": [dict(r) for r in rows]}
+
+# -----------------------------------------------
+# Phase 12: Profit / Loss Calculator
+# -----------------------------------------------
+class ProfitRequest(BaseModel):
+    crop: str
+    area_hectares: float
+    seed_cost: float
+    fertilizer_cost: float
+    irrigation_cost: float
+    labor_cost: float
+    other_costs: Optional[float] = 0.0
+    expected_yield_tons: Optional[float] = None
+    selling_price_per_ton: Optional[float] = None
+
+@app.post("/api/profit-calculator")
+def calculate_profit(data: ProfitRequest):
+    total_input_cost = (
+        data.seed_cost + data.fertilizer_cost +
+        data.irrigation_cost + data.labor_cost + (data.other_costs or 0)
+    ) * data.area_hectares
+
+    # Determine yield if not provided
+    if data.expected_yield_tons:
+        yield_tons = data.expected_yield_tons * data.area_hectares
+    else:
+        base = YIELD_BASE.get(data.crop.lower().replace(" ", ""), 2.5)
+        yield_tons = base * data.area_hectares
+
+    # Determine selling price if not provided
+    if data.selling_price_per_ton:
+        price_per_ton = data.selling_price_per_ton
+    else:
+        market = MARKET_PRICE_BASE.get(data.crop.capitalize(), {"min": 1800, "max": 2400})
+        price_per_ton = (market["min"] + market["max"]) / 2 / 10  # quintal → ton
+
+    gross_revenue = round(yield_tons * price_per_ton * 1000, 0)  # price in ₹/quintal × 10 quintals/ton
+    # Recalculate: price in ₹/quintal, 1 ton = 10 quintals
+    gross_revenue = round(yield_tons * price_per_ton, 0)
+    net_profit = round(gross_revenue - total_input_cost, 0)
+    roi_percent = round((net_profit / total_input_cost * 100) if total_input_cost > 0 else 0, 1)
+    break_even_price = round(total_input_cost / yield_tons, 2) if yield_tons > 0 else 0
+
+    return {
+        "crop": data.crop,
+        "area_hectares": data.area_hectares,
+        "total_input_cost_inr": int(total_input_cost),
+        "expected_yield_tons": round(yield_tons, 2),
+        "gross_revenue_inr": int(gross_revenue),
+        "net_profit_inr": int(net_profit),
+        "roi_percent": roi_percent,
+        "break_even_price_per_ton": break_even_price,
+        "verdict": "✅ Profitable" if net_profit > 0 else "⚠️ Loss — Costs exceed revenue",
+        "tip": "Drip irrigation use karo aur input cost 15-20% kam kar sakte ho!" if net_profit < total_input_cost * 0.2 else "Excellent returns! Government scheme ke liye apply karo."
+    }
+
+# -----------------------------------------------
+# Phase 13: Price Trend Prediction (30-day)
+# -----------------------------------------------
+@app.get("/api/price-trend/{crop}")
+def get_price_trend(crop: str):
+    base = MARKET_PRICE_BASE.get(crop.capitalize())
+    if not base:
+        raise HTTPException(status_code=404, detail=f"Crop '{crop}' not found")
+
+    today = datetime.now()
+    history = []
+    price = (base["min"] + base["max"]) / 2
+    trend_direction = {"rising": 0.005, "falling": -0.004, "stable": 0.001, "volatile": 0.02, "seasonal": 0.008}.get(base["trend"], 0.001)
+
+    for i in range(29, -1, -1):
+        d = today - timedelta(days=i)
+        noise = random.uniform(-0.025, 0.025)
+        price = price * (1 + trend_direction + noise)
+        price = max(base["min"] * 0.85, min(base["max"] * 1.15, price))
+        history.append({"date": d.strftime("%d %b"), "price": int(price)})
+
+    # Simple linear regression for 7-day forecast
+    prices = [h["price"] for h in history]
+    n = len(prices)
+    x_mean = (n - 1) / 2
+    y_mean = sum(prices) / n
+    slope = sum((i - x_mean) * (p - y_mean) for i, p in enumerate(prices)) / sum((i - x_mean) ** 2 for i in range(n))
+
+    forecast = []
+    last_price = prices[-1]
+    for i in range(1, 8):
+        d = today + timedelta(days=i)
+        pred = int(last_price + slope * i + random.uniform(-slope * 0.5, slope * 0.5))
+        pred = max(base["min"], min(base["max"], pred))
+        forecast.append({"date": d.strftime("%d %b"), "price": pred, "forecast": True})
+
+    signal = "BUY 🟢" if slope > 50 else ("SELL 🔴" if slope < -50 else "HOLD 🟡")
+    return {
+        "crop": crop,
+        "history": history,
+        "forecast": forecast,
+        "trend": base["trend"],
+        "signal": signal,
+        "slope_per_day": round(slope, 1),
+        "current_modal": history[-1]["price"]
+    }
+
+# -----------------------------------------------
+# Phase 14: PDF Report Download
+# -----------------------------------------------
+class PDFReportRequest(BaseModel):
+    farmer_name: Optional[str] = "Farmer"
+    state: Optional[str] = ""
+    crop: Optional[str] = ""
+    N: Optional[float] = None
+    P: Optional[float] = None
+    K: Optional[float] = None
+    temperature: Optional[float] = None
+    humidity: Optional[float] = None
+    ph: Optional[float] = None
+    rainfall: Optional[float] = None
+    yield_estimate: Optional[float] = None
+    profit_estimate: Optional[float] = None
+    disease: Optional[str] = None
+    irrigation_source: Optional[str] = None
+
+@app.post("/api/report/download")
+def download_pdf_report(data: PDFReportRequest):
+    """Generate and return a PDF farm analysis report."""
+    if not REPORTLAB_AVAILABLE:
+        raise HTTPException(status_code=503, detail="PDF library not available. Run: pip install reportlab")
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4,
+                            rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
+    styles = getSampleStyleSheet()
+    story = []
+
+    # Custom Styles
+    title_style = ParagraphStyle("Title", parent=styles["Title"],
+                                  fontSize=22, textColor=colors.HexColor("#1a7a3c"),
+                                  spaceAfter=6, alignment=TA_CENTER)
+    sub_style = ParagraphStyle("Sub", parent=styles["Normal"],
+                                fontSize=11, textColor=colors.HexColor("#555"),
+                                spaceAfter=4, alignment=TA_CENTER)
+    section_style = ParagraphStyle("Section", parent=styles["Heading2"],
+                                    fontSize=13, textColor=colors.HexColor("#1a7a3c"),
+                                    spaceBefore=14, spaceAfter=6)
+    body_style = ParagraphStyle("Body", parent=styles["Normal"], fontSize=10, spaceAfter=4)
+
+    # Header
+    story.append(Paragraph("🌾 AgriClimate AI — Farm Analysis Report", title_style))
+    story.append(Paragraph(f"Generated on: {datetime.now().strftime('%d %B %Y, %I:%M %p')}", sub_style))
+    story.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor("#1a7a3c")))
+    story.append(Spacer(1, 12))
+
+    # Farmer Info
+    story.append(Paragraph("Farmer Information", section_style))
+    info_data = [
+        ["Farmer Name", data.farmer_name or "—"],
+        ["State / Region", data.state or "—"],
+        ["Recommended Crop", data.crop or "—"],
+    ]
+    t = Table(info_data, colWidths=[200, 280])
+    t.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#e8f5e9")),
+        ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 10),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#ccc")),
+        ("ROWBACKGROUNDS", (0, 0), (-1, -1), [colors.white, colors.HexColor("#f9f9f9")]),
+        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+    ]))
+    story.append(t)
+    story.append(Spacer(1, 10))
+
+    # Soil & Climate
+    if data.N is not None:
+        story.append(Paragraph("Soil & Climate Parameters", section_style))
+        soil_data = [
+            ["Parameter", "Value", "Optimal Range"],
+            ["Nitrogen (N)", f"{data.N} kg/ha", "60-120 kg/ha"],
+            ["Phosphorus (P)", f"{data.P} kg/ha", "30-60 kg/ha"],
+            ["Potassium (K)", f"{data.K} kg/ha", "30-60 kg/ha"],
+            ["Temperature", f"{data.temperature}°C", "20-32°C"],
+            ["Humidity", f"{data.humidity}%", "50-80%"],
+            ["Soil pH", f"{data.ph}", "6.0-7.5"],
+            ["Annual Rainfall", f"{data.rainfall} mm", "600-2000 mm"],
+        ]
+        t2 = Table(soil_data, colWidths=[180, 140, 160])
+        t2.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1a7a3c")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, -1), 10),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#ccc")),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f9f9f9")]),
+            ("LEFTPADDING", (0, 0), (-1, -1), 8),
+            ("TOPPADDING", (0, 0), (-1, -1), 5),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+        ]))
+        story.append(t2)
+        story.append(Spacer(1, 10))
+
+    # Financial Summary
+    story.append(Paragraph("Financial Estimates", section_style))
+    fin_data = [
+        ["Metric", "Value"],
+        ["Expected Yield", f"{data.yield_estimate or '—'} tons/hectare"],
+        ["Revenue Estimate", f"₹{int((data.yield_estimate or 2.5) * 18000):,}"],
+        ["Net Profit Estimate", f"₹{int(data.profit_estimate or 0):,}" if data.profit_estimate else "Run Profit Calculator"],
+    ]
+    t3 = Table(fin_data, colWidths=[240, 240])
+    t3.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1a7a3c")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 10),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#ccc")),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f9f9f9")]),
+        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+    ]))
+    story.append(t3)
+    story.append(Spacer(1, 10))
+
+    # Footer
+    story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#ccc")))
+    story.append(Spacer(1, 6))
+    story.append(Paragraph("Generated by AgriClimate AI — India ka sabse smart agricultural advisor 🌱", sub_style))
+    story.append(Paragraph("This report is AI-generated. Please consult local agricultural officers for official guidance.", body_style))
+
+    doc.build(story)
+    buffer.seek(0)
+    filename = f"AgriReport_{data.farmer_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.pdf"
+    return Response(
+        content=buffer.read(),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
+
 # -----------------------------------------------
 # Serve new pages
 # -----------------------------------------------
 
 # Mount static folder for frontend
 app.mount("/assets", StaticFiles(directory="static"), name="static")
+
 
 @app.get("/login")
 def serve_login_page():
@@ -816,4 +1419,5 @@ def serve_frontend():
 @app.get("/dashboard")
 def serve_dashboard():
     return FileResponse("static/dashboard.html")
+
 
