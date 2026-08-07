@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
+from contextlib import asynccontextmanager
 # pyrefly: ignore[missing-import]
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
@@ -14,6 +15,10 @@ import asyncio
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import google.generativeai as genai
+try:
+    import httpx
+except ImportError:
+    httpx = None
 
 # Load env variables
 load_dotenv()
@@ -23,7 +28,52 @@ gemini_key = os.getenv("GEMINI_API_KEY")
 if gemini_key:
     genai.configure(api_key=gemini_key)
 
-app = FastAPI(title="AgriClimate AI Platform")
+# ─────────────────────────────────────────────
+# Keep-alive: ping self every 10 min so Render
+# free-tier server never goes to sleep
+# ─────────────────────────────────────────────
+KEEP_ALIVE_INTERVAL = 10 * 60   # seconds
+
+async def _keep_alive_loop():
+    """Background task: hits /ping every 14 minutes to prevent Render sleep."""
+    # Determine own URL from environment (set RENDER_EXTERNAL_URL on Render)
+    base_url = os.getenv("RENDER_EXTERNAL_URL", "").rstrip("/")
+    if not base_url:
+        # Fallback: try local port
+        port = os.getenv("PORT", "8000")
+        base_url = f"http://localhost:{port}"
+
+    ping_url = f"{base_url}/ping"
+    print(f"[keep-alive] Will ping {ping_url} every {KEEP_ALIVE_INTERVAL // 60} min")
+
+    await asyncio.sleep(30)   # wait for server to fully start
+    while True:
+        try:
+            if httpx:
+                async with httpx.AsyncClient(timeout=10) as client:
+                    resp = await client.get(ping_url)
+                    print(f"[keep-alive] ping → {resp.status_code} at {datetime.now().strftime('%H:%M:%S')}")
+            else:
+                # httpx not available – use asyncio subprocess curl fallback
+                print(f"[keep-alive] httpx unavailable, skipping ping at {datetime.now().strftime('%H:%M:%S')}")
+        except Exception as exc:
+            print(f"[keep-alive] ping failed: {exc}")
+        await asyncio.sleep(KEEP_ALIVE_INTERVAL)
+
+
+@asynccontextmanager
+async def lifespan(application: FastAPI):
+    """Start keep-alive background task on startup."""
+    task = asyncio.create_task(_keep_alive_loop())
+    yield
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
+
+
+app = FastAPI(title="AgriClimate AI Platform", lifespan=lifespan)
 
 # Load ML Model
 MODEL_PATH = "random_forest_crop_model.pkl"
@@ -42,6 +92,12 @@ class CropRequest(BaseModel):
     humidity: float
     ph: float
     rainfall: float
+
+@app.get("/ping")
+async def ping():
+    """Lightweight endpoint used by keep-alive loop to prevent Render sleep."""
+    return {"pong": True, "timestamp": datetime.utcnow().isoformat()}
+
 
 @app.get("/api/health")
 def health_check():
